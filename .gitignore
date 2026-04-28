@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.claude/
+.env
+.env.*
+!.env.example
+runs/*.json
+runs/*.log
+!runs/.gitkeep
+.pytest_cache/
+.DS_Store
+*.egg-info/
+.idea/
+.vscode/
