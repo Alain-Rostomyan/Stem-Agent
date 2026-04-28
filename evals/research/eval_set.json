@@ -1,0 +1,113 @@
+{
+  "domain": "research",
+  "split": "eval",
+  "task_kind": "short_answer_qa",
+  "description": "Held-out factual questions; never shown to the stem during evolution.",
+  "tasks": [
+    {
+      "id": "rs_eval_01_human_bones",
+      "question": "How many bones does the adult human body typically have?",
+      "answer": "206",
+      "aliases": ["206", "two hundred and six"],
+      "notes": "Adults; newborns have ~270 that fuse over time."
+    },
+    {
+      "id": "rs_eval_02_mona_lisa",
+      "question": "Who painted the Mona Lisa?",
+      "answer": "Leonardo da Vinci",
+      "aliases": ["Leonardo da Vinci", "Leonardo", "da Vinci"],
+      "notes": "Currently in the Louvre."
+    },
+    {
+      "id": "rs_eval_03_largest_planet",
+      "question": "What is the largest planet in our solar system?",
+      "answer": "Jupiter",
+      "aliases": ["Jupiter"],
+      "notes": "By both mass and volume."
+    },
+    {
+      "id": "rs_eval_04_apollo_11",
+      "question": "In what year did the Apollo 11 mission land humans on the Moon?",
+      "answer": "1969",
+      "aliases": ["1969"],
+      "notes": "July 20, 1969."
+    },
+    {
+      "id": "rs_eval_05_smallest_country",
+      "question": "What is the smallest country in the world by land area?",
+      "answer": "Vatican City",
+      "aliases": ["Vatican City", "Vatican", "the Vatican"],
+      "notes": "About 0.49 km^2."
+    },
+    {
+      "id": "rs_eval_06_general_relativity",
+      "question": "Who developed the theory of general relativity?",
+      "answer": "Albert Einstein",
+      "aliases": ["Albert Einstein", "Einstein"],
+      "notes": "Published 1915."
+    },
+    {
+      "id": "rs_eval_07_atmosphere_main_gas",
+      "question": "What is the most abundant gas in Earth's atmosphere by volume?",
+      "answer": "Nitrogen",
+      "aliases": ["Nitrogen", "N2", "N₂"],
+      "notes": "About 78%."
+    },
+    {
+      "id": "rs_eval_08_most_native_speakers",
+      "question": "Which language has the most native speakers in the world?",
+      "answer": "Mandarin Chinese",
+      "aliases": ["Mandarin Chinese", "Mandarin", "Chinese (Mandarin)"],
+      "notes": "Native, not total speakers."
+    },
+    {
+      "id": "rs_eval_09_water_boiling_point",
+      "question": "What is the boiling point of pure water at standard atmospheric pressure (sea level), in degrees Celsius?",
+      "answer": "100",
+      "aliases": ["100", "100°C", "100 C", "100 degrees Celsius"],
+      "notes": "At 1 atm."
+    },
+    {
+      "id": "rs_eval_10_first_us_president",
+      "question": "Who was the first president of the United States?",
+      "answer": "George Washington",
+      "aliases": ["George Washington", "Washington"],
+      "notes": "Took office 1789."
+    },
+    {
+      "id": "rs_eval_11_titanic_year",
+      "question": "In what year did the Titanic sink?",
+      "answer": "1912",
+      "aliases": ["1912"],
+      "notes": "April 15, 1912."
+    },
+    {
+      "id": "rs_eval_12_largest_ocean",
+      "question": "What is the largest ocean on Earth?",
+      "answer": "Pacific Ocean",
+      "aliases": ["Pacific Ocean", "the Pacific", "Pacific"],
+      "notes": "By area and volume."
+    },
+    {
+      "id": "rs_eval_13_water_formula",
+      "question": "What is the chemical formula for water?",
+      "answer": "H2O",
+      "aliases": ["H2O", "H₂O"],
+      "notes": "Two hydrogens and one oxygen."
+    },
+    {
+      "id": "rs_eval_14_un_founded",
+      "question": "In what year was the United Nations founded?",
+      "answer": "1945",
+      "aliases": ["1945"],
+      "notes": "Charter signed June 1945; effective October 24, 1945."
+    },
+    {
+      "id": "rs_eval_15_tallest_mountain",
+      "question": "What is the tallest mountain on Earth as measured from sea level?",
+      "answer": "Mount Everest",
+      "aliases": ["Mount Everest", "Everest"],
+      "notes": "Height ~8,849 m. Mauna Kea is taller from base, but the question specifies sea level."
+    }
+  ]
+}
