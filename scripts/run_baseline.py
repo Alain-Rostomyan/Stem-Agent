@@ -27,7 +27,12 @@ sys.path.insert(0, str(ROOT))
 from agent.baseline import baseline_config  # noqa: E402
 from evals.qa.runner import run_qa_eval  # noqa: E402
 from evals.research.runner import run_research_eval  # noqa: E402
+from stem.dotenv import load_dotenv  # noqa: E402
 from stem.llm_client import LLMClient  # noqa: E402
+
+# Load .env early so OPENAI_API_KEY is available regardless of how this is
+# launched (VSCode terminal, plain shell, CI). A real shell `export` still wins.
+load_dotenv(ROOT / ".env")
 
 
 def main() -> int:
