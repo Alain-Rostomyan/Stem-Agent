@@ -81,6 +81,38 @@ QA: **66.7% (10/15)**. Failures split as 4 "tests too strict" / 1 "tests too wea
 This is the real before-number for QA. Less dramatic than the research framing but
 the headroom is genuine.
 
+### Research baseline locked (2026-05-01, post-pivot)
+
+Research: **26.7% (4/15)** on the new synthesis-question eval set.
+
+Per-shape breakdown:
+
+| Shape | Score | Notes |
+|---|---|---|
+| agg | 4/5 (80%) | Solved when both list and filter live in canonical pre-tabulated form (UN langs, oceans, 7 Wonders, NFL teams). Failed only on E1 (NATO post-2000 accession dates). |
+| filter | 0/5 (0%) | Total wipeout. |
+| granular | 0/5 (0%) | Total wipeout. |
+
+**Failure pattern is consistent across the dry run and the locked eval:**
+
+- 9 of 11 failures hit `max_steps` (12) without producing any final answer at all.
+  The agent looped — repeating the same `web_search` query, or trying `read_file`
+  on URLs because no `fetch_url` tool exists in the starter set.
+- 2 of 11 failures terminated quickly with the wrong answer (E9 NATO monarchies
+  said 3 instead of 7 — incomplete enumeration; E10 SA Bantu said 8 instead of 9
+  — off-by-one count).
+
+So 82% of all failures are "stuck searching, no answer produced" — a workflow
+discipline gap, not a knowledge gap. The specialized agent doesn't need to be
+smarter at facts; it needs to (a) decompose list-then-lookup-per-item, (b) author
+or substitute a URL-fetch capability, and (c) commit to an answer instead of
+re-searching when partial data is enough.
+
+The agg shape passing 4/5 is itself a useful finding: when the canonical list is
+small and the filter is pre-tabulated, snippet-skim is sufficient even for
+synthesis questions. The specialization gap is concentrated in shapes that
+require *per-item* lookups baseline can't reach.
+
 ---
 
 ## Costs / Budget tracking
@@ -91,6 +123,7 @@ Budget: €50–70 total.
 |---|---|---|---|
 | Phase 1 baselines | $0.02 | $0.02 | QA + 2× research baselines |
 | Dry run (9 synth Qs) | $0.034 | $0.054 | High vs prediction; baseline iterated to step ceiling on most |
+| Locked research baseline (15 synth Qs) | $0.054 | $0.108 | 26.7% accuracy, full eval run |
 
 Local rollup: `python -m scripts.cost_summary`. Authoritative: platform.openai.com/usage.
 

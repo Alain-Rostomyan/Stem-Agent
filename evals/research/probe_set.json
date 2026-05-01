@@ -1,43 +1,53 @@
 {
   "domain": "research",
   "split": "probe",
-  "task_kind": "short_answer_qa",
-  "description": "Hard short-answer questions: multi-hop, common misconceptions, indirect phrasings. Designed so a generic single-search baseline scores well below 100% and the stem has headroom to specialize. Used during stem evolution; never appears in eval_set.json.",
+  "task_kind": "synthesis_qa",
+  "description": "Synthesis questions used during stem evolution. 5 tasks, mixing the three shapes (agg / filter / granular) validated by the dry-run set. Designed so a generic snippet-skim baseline can't reach the answer in one search — list-then-lookup or list-then-filter-then-count is required. Never appears in eval_set.json.",
+  "shapes": {
+    "agg": "Numeric aggregation (count/sum/ratio) over per-item lookups.",
+    "filter": "Filter axis differs from list axis: canonical list, non-canonical filter.",
+    "granular": "At least one ingredient too granular/recent/obscure for parametric memory."
+  },
   "tasks": [
     {
-      "id": "rs_probe_01_churchill_successor",
-      "question": "Who succeeded Winston Churchill as British Prime Minister in 1955?",
-      "answer": "Anthony Eden",
-      "aliases": ["Anthony Eden", "Eden", "Sir Anthony Eden", "Robert Anthony Eden"],
-      "notes": "Churchill resigned April 1955; Eden took office the same month."
+      "id": "rs_probe_01_eu_eurozone",
+      "shape": "agg",
+      "question": "Of the 27 EU member states (as of June 2024), how many use the Euro as their sole official currency?",
+      "answer": "20",
+      "aliases": ["20", "twenty"],
+      "notes": "Eurozone reached 20 members when Croatia adopted the Euro on 2023-01-01. Non-Euro EU members: Bulgaria, Czechia, Denmark, Hungary, Poland, Romania, Sweden (7)."
     },
     {
-      "id": "rs_probe_02_murray_capital",
-      "question": "What is the capital city of the country whose largest river is the Murray?",
-      "answer": "Canberra",
-      "aliases": ["Canberra"],
-      "notes": "Multi-hop: Murray River -> Australia -> Canberra. A snippet-skim agent often returns Sydney."
+      "id": "rs_probe_02_russia_borders_eu",
+      "shape": "filter",
+      "question": "Of the 14 countries that share a land border with Russia, how many are member states of the European Union (as of June 2024)?",
+      "answer": "5",
+      "aliases": ["5", "five"],
+      "notes": "EU members on the list: Finland, Estonia, Latvia, Lithuania, Poland. Norway shares a border but is EFTA, not EU. Filter axis (EU membership) is independent of list axis (Russia's neighbors)."
     },
     {
-      "id": "rs_probe_03_second_largest_moon",
-      "question": "What is the second-largest moon in our solar system, by diameter?",
-      "answer": "Titan",
-      "aliases": ["Titan"],
-      "notes": "Ganymede is #1 (5,268 km); Titan #2 (5,149 km). Snippet-skim often returns Ganymede or Europa."
+      "id": "rs_probe_03_uk_pms_labour",
+      "shape": "granular",
+      "question": "Of the 8 most recent UK Prime Ministers, in order from Tony Blair (1997) through Keir Starmer (2024) inclusive, how many led the Labour Party?",
+      "answer": "3",
+      "aliases": ["3", "three"],
+      "notes": "Blair, Brown, Starmer (Labour); Cameron, May, Johnson, Truss, Sunak (Conservative). Starmer became PM in July 2024 — post-cutoff for gpt-4o-mini's training data."
     },
     {
-      "id": "rs_probe_04_first_mars_orbiter",
-      "question": "What was the first artificial object to enter orbit around a planet other than Earth?",
-      "answer": "Mariner 9",
-      "aliases": ["Mariner 9", "Mariner-9", "NASA Mariner 9"],
-      "notes": "Entered Mars orbit November 14, 1971, just days before the Soviet Mars 2."
+      "id": "rs_probe_04_nordic_population_sum",
+      "shape": "agg",
+      "question": "What is the sum of the populations of the 5 Nordic countries (Denmark, Finland, Iceland, Norway, Sweden) in millions, rounded to the nearest whole number, based on 2024 estimates?",
+      "answer": "28",
+      "aliases": ["28", "28 million", "twenty-eight"],
+      "notes": "Approx 2024 figures: DK 5.96, FI 5.55, IS 0.39, NO 5.55, SE 10.55. Sum ~28.0. Verify against current UN/Worldometer; ±1 acceptable to judge."
     },
     {
-      "id": "rs_probe_05_more_than_two_terms",
-      "question": "Which U.S. president served more than two terms in office?",
-      "answer": "Franklin D. Roosevelt",
-      "aliases": ["Franklin D. Roosevelt", "FDR", "Franklin Delano Roosevelt", "Franklin Roosevelt", "Roosevelt"],
-      "notes": "Four terms (1933-1945). Twenty-second Amendment (1951) later capped presidents at two."
+      "id": "rs_probe_05_eu_monarchies",
+      "shape": "filter",
+      "question": "Of the 27 EU member states (as of 2024), how many are constitutional monarchies in which a hereditary monarch serves as head of state?",
+      "answer": "6",
+      "aliases": ["6", "six"],
+      "notes": "Belgium, Denmark, Luxembourg (Grand Duchy), Netherlands, Spain, Sweden. Filter axis (form of government) is independent of list axis (EU membership)."
     }
   ]
 }
