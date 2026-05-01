@@ -162,7 +162,57 @@ Local rollup: `python -m scripts.cost_summary`. Authoritative: platform.openai.c
 
 ---
 
-## Phase 2 — Stem evolution (NOT YET STARTED)
+## Phase 2 — Stem evolution
 
-Reserved for observations during stem runs. What proposals did it generate? What
-got rolled back? What custom tools did it write? Was anything surprising?
+### 2026-05-01: First investigate call on research domain — fetch_url proposed unprompted
+
+Ran `stem.investigate.investigate(...)` on the research domain with the 5 probe
+tasks and the 15 baseline traces from the locked baseline. Single gpt-5.1 call,
+$0.02, 1685 output tokens. Saved analysis at
+`runs/investigate_research_20260501T231951.md`.
+
+**Two writeup-worthy observations:**
+
+1. **The stem independently proposed a `fetch_url` tool.** From the analysis:
+
+   > Tooling: lightweight HTML/text fetcher (if allowed): A `fetch_url` tool
+   > that returns cleaned page text or HTML for a given URL. This avoids relying
+   > solely on search snippets and lets the agent systematically parse
+   > tables/lists.
+
+   We deliberately left no URL fetcher in the starter set, hoping the stem
+   would identify it as the missing capability. It did, on the first
+   investigate call, with the right justification (snippets are insufficient
+   for systematic table extraction). This is the cleanest possible "stem
+   discovers what it needs" story.
+
+2. **The stem proposed `run_python` as a counting tool, not a code tool.** This
+   was unexpected. The analysis recommends:
+
+   > Encourage `run_python` for counting: When there are more than ~5 items,
+   > use run_python to store items as a list of dicts, filter and count. This
+   > reduces off-by-one and omission errors.
+
+   `run_python` was already in the starter set as a generic "execute Python"
+   tool — but using it specifically as a way to *materialize a structured list
+   and count programmatically* is a workflow-discipline affordance, not a tool
+   gap. The stem identified this as a way to fix the E10 (SA Bantu = 8 vs 9)
+   off-by-one failure mode without adding any tool.
+
+   This is a richer specialization story than just "stem wrote new tools." The
+   stem is also re-purposing existing tools by changing how the agent uses
+   them via prompt scaffolding.
+
+**Other things in the analysis worth keeping:** explicit stopping criterion
+("once you have a complete list of items in the universe and have applied the
+filter to each item, immediately compute the count and answer; do not perform
+additional web searches"), shape-specific few-shot exemplars (the stem
+leveraged the `shape` tags we added to the eval/probe sets), and ambiguity
+handling instructions (cross-check definitions across sources).
+
+**What this means for Phase 2 next steps.** The investigate phase output is
+rich enough that propose.py has a real menu of changes to draw from — adding
+a fetch_url custom tool, modifying the system prompt to enforce the structured
+template, adding shape-specific few-shots. We didn't need to over-engineer
+investigate to get useful proposals; the model did the heavy lifting from a
+modest scaffold.
