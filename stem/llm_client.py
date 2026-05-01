@@ -26,7 +26,15 @@ class BudgetExceeded(RuntimeError):
 
 # Approximate USD per 1K tokens. Cost tracking is best-effort; if a model is
 # missing from this table we log the call with cost=None rather than crash.
+# Verify current numbers against https://openai.com/api/pricing/ before any
+# spend-sensitive run — OpenAI updates these.
 _PRICING: dict[str, dict[str, float]] = {
+    "gpt-5.1":             {"in": 0.00125, "out": 0.01},
+    "gpt-5.1-mini":        {"in": 0.00025, "out": 0.002},
+    "gpt-5.1-nano":        {"in": 0.00005, "out": 0.0004},
+    "gpt-5":               {"in": 0.00125, "out": 0.01},
+    "gpt-5-mini":          {"in": 0.00025, "out": 0.002},
+    "gpt-5-nano":          {"in": 0.00005, "out": 0.0004},
     "gpt-4o":              {"in": 0.0025,  "out": 0.01},
     "gpt-4o-mini":         {"in": 0.00015, "out": 0.0006},
     "gpt-4.1":             {"in": 0.002,   "out": 0.008},
