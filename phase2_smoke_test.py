@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Optional
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -38,6 +39,13 @@ from stem.propose import (  # noqa: E402
     propose,
     validate_proposal,
 )
+from stem.commit import (  # noqa: E402
+    CommitOutcome,
+    _format_commit_message,
+    accept_proposal,
+    reject_proposal,
+)
+from stem.stop_check import should_stop  # noqa: E402
 from stem.test_proposal import (  # noqa: E402
     TestResult,
     apply_proposal_to_config,
@@ -522,6 +530,178 @@ def test_test_proposal_short_circuits_on_sanity_fail() -> None:
     _assert(result.probe_per_task == [], "probe not run -> empty per_task")
 
 
+# --------------------------------------------------- stop_check tests
+
+def test_stop_check_budget() -> None:
+    stop, reason = should_stop(
+        probe_history=[0.1, 0.2, 0.3, 0.4, 0.5],  # would not plateau
+        budget_calls_used=100, budget_calls_limit=100,
+    )
+    _assert(stop and reason == "budget", f"budget exhausted -> stop=budget (got {stop},{reason})")
+
+
+def test_stop_check_plateau() -> None:
+    stop, reason = should_stop(
+        probe_history=[0.20, 0.40, 0.42, 0.43, 0.44],  # last 3 within 0.05
+        budget_calls_used=10, budget_calls_limit=100,
+    )
+    _assert(stop and reason == "plateau", f"plateau detected (got {stop},{reason})")
+
+
+def test_stop_check_continue_short_history() -> None:
+    stop, reason = should_stop(
+        probe_history=[0.1, 0.1],  # only 2 scores, not enough for window=3
+        budget_calls_used=10, budget_calls_limit=100,
+    )
+    _assert(not stop and reason == "continue",
+            f"too few scores -> continue (got {stop},{reason})")
+
+
+def test_stop_check_continue_still_improving() -> None:
+    stop, reason = should_stop(
+        probe_history=[0.20, 0.30, 0.45],  # spread 0.25, still improving
+        budget_calls_used=10, budget_calls_limit=100,
+    )
+    _assert(not stop and reason == "continue",
+            f"still improving -> continue (got {stop},{reason})")
+
+
+def test_stop_check_budget_beats_plateau() -> None:
+    stop, reason = should_stop(
+        probe_history=[0.4, 0.4, 0.4],  # plateau true
+        budget_calls_used=100, budget_calls_limit=100,  # also out of budget
+    )
+    _assert(stop and reason == "budget",
+            f"budget reported before plateau (got {stop},{reason})")
+
+
+# --------------------------------------------------- commit tests
+
+def _make_test_result(
+    action: str = "modify_prompt",
+    details: Optional[dict] = None,
+    sanity_passed: bool = True,
+    written_files: Optional[list[str]] = None,
+    probe_score: float = 0.4,
+) -> TestResult:
+    cfg = _baseline_cfg()
+    if action == "modify_prompt":
+        details = details or {"new_system_prompt": "Be terse."}
+        cfg.system_prompt = details["new_system_prompt"]
+    elif action == "write_tool":
+        details = details or {"tool_name": "fetch_url",
+                              "description": "Fetch URL",
+                              "python_code": VALID_TOOL_CODE}
+        cfg.custom_tools = list(cfg.custom_tools) + (written_files or [])
+    p = Proposal(action=action, rationale="x", details=details or {}, valid=True)
+    return TestResult(
+        proposal=p, candidate_config=cfg,
+        sanity_passed=sanity_passed, sanity_reason="ok" if sanity_passed else "no_answer",
+        sanity_answer="OK" if sanity_passed else None,
+        probe_score=probe_score,
+        probe_per_task=[],
+        written_files=written_files or [],
+    )
+
+
+def _setup_temp_repo(tmp: Path) -> Path:
+    """Create a fresh git repo with one initial commit."""
+    import subprocess
+    subprocess.run(["git", "init", "-q"], cwd=str(tmp), check=True)
+    # Set local user.email/name so commits succeed without global config.
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=str(tmp), check=True)
+    subprocess.run(["git", "config", "user.name", "test"], cwd=str(tmp), check=True)
+    (tmp / "README.md").write_text("seed\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=str(tmp), check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "seed"], cwd=str(tmp), check=True)
+    return tmp
+
+
+def test_commit_accept_creates_commit() -> None:
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        repo = _setup_temp_repo(Path(d))
+        cfg_path = repo / "configs" / "research.json"
+        tr = _make_test_result()
+        outcome = accept_proposal(tr, step_n=1, config_path=cfg_path, repo_root=repo)
+        _assert(outcome.accepted, f"accept reports accepted=True (error={outcome.error})")
+        _assert(outcome.commit_hash and len(outcome.commit_hash) >= 7,
+                f"commit hash returned (got {outcome.commit_hash!r})")
+        _assert(cfg_path.exists(), "config file written")
+        # Verify the commit is real.
+        import subprocess
+        msg = subprocess.run(
+            ["git", "log", "-1", "--format=%s%n%b"],
+            cwd=str(repo), capture_output=True, text=True, check=True,
+        ).stdout
+        _assert("evolution step 1: modify_prompt" in msg,
+                f"commit message contains action header (got {msg[:200]!r})")
+
+
+def test_commit_accept_with_written_files() -> None:
+    """write_tool action: written_files get added alongside the config."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        repo = _setup_temp_repo(Path(d))
+        # Pretend test_proposal already wrote the tool file.
+        tool_dir = repo / "tools" / "custom" / "research"
+        tool_dir.mkdir(parents=True)
+        tool_path = tool_dir / "fetch_url.py"
+        tool_path.write_text(VALID_TOOL_CODE, encoding="utf-8")
+
+        tr = _make_test_result(action="write_tool", written_files=[str(tool_path)])
+        cfg_path = repo / "configs" / "research.json"
+        outcome = accept_proposal(tr, step_n=2, config_path=cfg_path, repo_root=repo)
+        _assert(outcome.accepted, f"accepted (error={outcome.error})")
+
+        import subprocess
+        files = subprocess.run(
+            ["git", "show", "--name-only", "--format=", "HEAD"],
+            cwd=str(repo), capture_output=True, text=True, check=True,
+        ).stdout.splitlines()
+        _assert(any("fetch_url.py" in f for f in files),
+                f"tool file in commit (files={files})")
+        _assert(any("research.json" in f for f in files),
+                f"config in commit (files={files})")
+
+
+def test_commit_reject_removes_written_files() -> None:
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        repo = _setup_temp_repo(Path(d))
+        tool_dir = repo / "tools" / "custom" / "research"
+        tool_dir.mkdir(parents=True)
+        tool_path = tool_dir / "broken.py"
+        tool_path.write_text("x = 1\n", encoding="utf-8")
+
+        tr = _make_test_result(action="write_tool", written_files=[str(tool_path)],
+                               sanity_passed=False, probe_score=0.0)
+        outcome = reject_proposal(tr, repo_root=repo)
+        _assert(not outcome.accepted, "reject reports accepted=False")
+        _assert(not tool_path.exists(), f"written file deleted (still exists at {tool_path})")
+
+
+def test_commit_accept_refuses_failed_sanity() -> None:
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        repo = _setup_temp_repo(Path(d))
+        cfg_path = repo / "configs" / "research.json"
+        tr = _make_test_result(sanity_passed=False)
+        outcome = accept_proposal(tr, step_n=1, config_path=cfg_path, repo_root=repo)
+        _assert(not outcome.accepted, "accept refuses failed-sanity proposal")
+        _assert("sanity" in (outcome.error or "").lower(),
+                f"error mentions sanity (got {outcome.error!r})")
+
+
+def test_commit_format_message_includes_score_and_action() -> None:
+    tr = _make_test_result(probe_score=0.467)
+    msg = _format_commit_message(tr, step_n=3)
+    _assert(msg.startswith("evolution step 3: modify_prompt"),
+            f"header line correct (got {msg.splitlines()[0]!r})")
+    _assert("probe_score: 0.467" in msg, "probe score rendered")
+    _assert("rationale:" in msg, "rationale section present")
+
+
 def main() -> int:
     failures = 0
     suites = [
@@ -552,6 +732,16 @@ def main() -> int:
         ("test_proposal.sanity: fails on empty answer", test_sanity_check_fails_on_empty_answer),
         ("test_proposal.test_proposal: short-circuits on invalid", test_test_proposal_short_circuits_on_invalid),
         ("test_proposal.test_proposal: short-circuits on sanity fail", test_test_proposal_short_circuits_on_sanity_fail),
+        ("stop_check: budget exhausted", test_stop_check_budget),
+        ("stop_check: plateau detected", test_stop_check_plateau),
+        ("stop_check: short history -> continue", test_stop_check_continue_short_history),
+        ("stop_check: still improving -> continue", test_stop_check_continue_still_improving),
+        ("stop_check: budget reported before plateau", test_stop_check_budget_beats_plateau),
+        ("commit.accept: creates commit", test_commit_accept_creates_commit),
+        ("commit.accept: includes written files", test_commit_accept_with_written_files),
+        ("commit.reject: removes written files", test_commit_reject_removes_written_files),
+        ("commit.accept: refuses failed-sanity", test_commit_accept_refuses_failed_sanity),
+        ("commit.format_message: includes score+action", test_commit_format_message_includes_score_and_action),
     ]
     for name, fn in suites:
         print(f"\n--- {name} ---")
