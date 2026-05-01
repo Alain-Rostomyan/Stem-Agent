@@ -216,3 +216,38 @@ a fetch_url custom tool, modifying the system prompt to enforce the structured
 template, adding shape-specific few-shots. We didn't need to over-engineer
 investigate to get useful proposals; the model did the heavy lifting from a
 modest scaffold.
+
+### 2026-05-01: First propose call — sequencing mistake worth keeping
+
+Ran `stem.propose.propose(...)` with the saved investigate analysis as input,
+starting from `default_config(domain='research')` (which has only 4 of 7
+starter tools enabled — no `web_search`, `write_file`, or `run_shell_command`).
+Single gpt-5.1 call, $0.019. Saved at `runs/propose_research_20260501T235254.json`.
+
+**The proposer chose `modify_prompt` and authored a 6.1k-character system
+prompt instructing the agent to "use targeted web_search queries..." — but
+`web_search` isn't in the current enabled_tools.** The proposer's own
+rationale even notes: "the agent already has run_python but no web access."
+And it still went for a prompt change before enabling the missing tool.
+
+This is a sequencing mistake: the prompt depends on tools that haven't been
+turned on yet. Applied as-is, this proposal would not move the probe score —
+the agent still literally cannot reach web data.
+
+**Why this is the right kind of failure to keep.** The whole point of the
+test_proposal + stop_check + commit-or-rollback loop is to catch and correct
+exactly this kind of plausible-but-incomplete first move. We expect to see
+the next iteration:
+  - probe score doesn't improve (no web access)
+  - proposer sees the score plateau plus the unchanged tool inventory
+  - next action becomes `enable_tool(web_search)`, then later `modify_prompt`
+    can take effect
+
+If we'd hand-tuned the proposer to always enable tools before tweaking the
+prompt, we'd hide a story the rubric explicitly wants ("the path your thinking
+took, especially where things didn't go as expected"). The imperfect proposer
++ correcting loop is the writeup, not a bug to engineer around.
+
+What we lose by leaving it: one wasted evolution iteration's worth of LLM
+calls — call it ~$0.05 — every time the proposer makes a sequencing mistake.
+That's an acceptable cost given budget headroom (~$50+ remaining).
