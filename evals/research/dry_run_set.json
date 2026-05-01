@@ -1,0 +1,85 @@
+{
+  "domain": "research",
+  "split": "dry_run",
+  "task_kind": "synthesis_qa",
+  "description": "Trial set of 9 synthesis-style questions (3 per shape) used to test whether the new question shapes defeat the snippet-skim baseline. NOT part of the locked probe or eval sets. Answers are best-effort and should be spot-checked before treating any failure as a real miss. The goal of running baseline against this set is to see per-shape performance: shapes where baseline lands 20-60% are keepers; 100% means contaminated, 0% means too hard.",
+  "shapes": {
+    "agg": "Numeric aggregation (count/sum/ratio) over per-item lookups.",
+    "filter": "Filter axis differs from list axis: canonical list, non-canonical filter.",
+    "granular": "At least one ingredient too granular/recent/obscure for parametric memory."
+  },
+  "tasks": [
+    {
+      "id": "rs_dry_01_2024_films_runtime",
+      "shape": "agg",
+      "question": "Of the 10 highest-grossing films released in 2024 (worldwide box office), how many have a theatrical runtime greater than 150 minutes?",
+      "answer": "2",
+      "aliases": ["2", "two"],
+      "notes": "Best-guess basis: Wicked (~160m) and Dune Part Two (~166m) clear 150; Inside Out 2, Deadpool & Wolverine, Despicable Me 4, Moana 2, Gladiator II (~148m), Joker 2, Beetlejuice 2, Sonic 3 do not. Verify with Box Office Mojo / per-film runtimes."
+    },
+    {
+      "id": "rs_dry_02_wc2022_zero_wins",
+      "shape": "agg",
+      "question": "Of the 32 teams that participated in the 2022 FIFA Men's World Cup in Qatar, how many won zero matches in the entire group stage?",
+      "answer": "5",
+      "aliases": ["5", "five"],
+      "notes": "Best-guess: Qatar, Wales, Denmark, Canada, Serbia. Verify against group-stage results."
+    },
+    {
+      "id": "rs_dry_03_nato_under_5m",
+      "shape": "agg",
+      "question": "Of the 32 NATO member countries as of June 2024, how many have a national population of less than 5 million?",
+      "answer": "10",
+      "aliases": ["10", "ten"],
+      "notes": "Best-guess set: Albania, Croatia, Estonia, Iceland, Latvia, Lithuania, Luxembourg, Montenegro, North Macedonia, Slovenia. Slovakia (~5.4M) and Norway (~5.5M) are just over. Verify against current UN/Worldometer figures."
+    },
+    {
+      "id": "rs_dry_04_eu_non_latin_script",
+      "shape": "filter",
+      "question": "Of the 27 EU member states (as of 2024), how many use a script other than the Latin alphabet as the official script of their main official language?",
+      "answer": "3",
+      "aliases": ["3", "three"],
+      "notes": "Greece (Greek alphabet), Bulgaria (Cyrillic), Cyprus (Greek alphabet for Greek, the dominant official language). Filter axis (script) is different from list axis (EU membership). Date-locked replacement for the more volatile G7 question."
+    },
+    {
+      "id": "rs_dry_05_wc_hosts_southern_hemisphere",
+      "shape": "filter",
+      "question": "Of the last 10 FIFA Men's World Cup host countries (1986 through 2022 inclusive), how many lie entirely or partly in the Southern Hemisphere?",
+      "answer": "2",
+      "aliases": ["2", "two"],
+      "notes": "Hosts: Mexico 1986, Italy 1990, USA 1994, France 1998, S Korea/Japan 2002, Germany 2006, South Africa 2010, Brazil 2014, Russia 2018, Qatar 2022. South Africa and Brazil are in the Southern Hemisphere; all others are entirely Northern. (S Korea/Japan 2002 counts as one host pair, still 10 tournaments.)"
+    },
+    {
+      "id": "rs_dry_06_populous_indian_ocean",
+      "shape": "filter",
+      "question": "Of the 10 most populous countries in the world (per 2024 UN estimates), how many have a coastline on the Indian Ocean?",
+      "answer": "4",
+      "aliases": ["4", "four"],
+      "notes": "Top 10 populous (2024): India, China, USA, Indonesia, Pakistan, Nigeria, Brazil, Bangladesh, Russia, Mexico. Indian Ocean coastlines: India, Indonesia, Pakistan, Bangladesh = 4. Filter axis (geography) different from list axis (population)."
+    },
+    {
+      "id": "rs_dry_07_tallest_buildings_recent",
+      "shape": "granular",
+      "question": "Of the 10 tallest completed buildings in the world as of January 2025, how many were completed in the year 2015 or later?",
+      "answer": "7",
+      "aliases": ["7", "seven"],
+      "notes": "Top 10 tallest as of early 2025: Burj Khalifa (2010, no), Merdeka 118 (2023, yes), Shanghai Tower (2015, yes), Mecca Royal Clock Tower (2012, no), Ping An Finance Centre (2017, yes), Lotte World Tower (2017, yes), One WTC (2014, no), Guangzhou CTF (2016, yes), Tianjin CTF (2019, yes), China Zun / CITIC Tower (2018, yes). 7 of 10."
+    },
+    {
+      "id": "rs_dry_08_olympic_hosts_capitals",
+      "shape": "granular",
+      "question": "Of the 5 most recent Summer Olympic Games host cities (2008 through 2024 inclusive), how many are the capital city of their country?",
+      "answer": "4",
+      "aliases": ["4", "four"],
+      "notes": "Beijing 2008 (capital of China, yes), London 2012 (UK, yes), Rio 2016 (NOT capital - Brasilia is, no), Tokyo 2020 (Japan, yes), Paris 2024 (France, yes). 4 of 5. Trips up agents that don't know Brazil's capital."
+    },
+    {
+      "id": "rs_dry_09_nobel_lit_non_english",
+      "shape": "granular",
+      "question": "Of the 5 most recent Nobel Prize in Literature laureates (2020 through 2024 inclusive), how many wrote primarily in a language other than English?",
+      "answer": "3",
+      "aliases": ["3", "three"],
+      "notes": "2020 Louise Gluck (English, no), 2021 Abdulrazak Gurnah (English, no), 2022 Annie Ernaux (French, yes), 2023 Jon Fosse (Norwegian Nynorsk, yes), 2024 Han Kang (Korean, yes). 3 of 5."
+    }
+  ]
+}

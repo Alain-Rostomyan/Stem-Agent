@@ -38,7 +38,7 @@ load_dotenv(ROOT / ".env")
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--domain", choices=["qa", "research"], required=True)
-    p.add_argument("--split", choices=["probe", "eval"], default="eval")
+    p.add_argument("--split", choices=["probe", "eval", "dry_run"], default="eval")
     p.add_argument("--model", default=os.environ.get("STEM_DEFAULT_MODEL", "gpt-4o-mini"))
     p.add_argument(
         "--judge-model",
@@ -129,13 +129,16 @@ def main() -> int:
         print(f"Agent LLM: {result.llm_stats}")
         print(f"Judge LLM: {result.judge_stats}")
 
-    canonical = log_dir / f"baseline_{args.domain}.json"
     timestamped = log_dir / f"baseline_{args.domain}_{args.split}_{ts}.json"
     with timestamped.open("w", encoding="utf-8") as f:
         json.dump(out, f, indent=2, default=str)
-    with canonical.open("w", encoding="utf-8") as f:
-        json.dump(out, f, indent=2, default=str)
-    print(f"\nResults written to:\n  {timestamped}\n  {canonical}  (canonical)")
+    if args.split == "eval":
+        canonical = log_dir / f"baseline_{args.domain}.json"
+        with canonical.open("w", encoding="utf-8") as f:
+            json.dump(out, f, indent=2, default=str)
+        print(f"\nResults written to:\n  {timestamped}\n  {canonical}  (canonical)")
+    else:
+        print(f"\nResults written to:\n  {timestamped}")
     return 0
 
 

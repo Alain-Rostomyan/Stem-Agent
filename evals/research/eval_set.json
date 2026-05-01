@@ -2,112 +2,112 @@
   "domain": "research",
   "split": "eval",
   "task_kind": "short_answer_qa",
-  "description": "Held-out factual questions; never shown to the stem during evolution.",
+  "description": "Hard short-answer questions designed to discriminate between a generic single-search baseline and a specialized agent that can multi-hop, verify against multiple sources, and resist common misconceptions. Held-out; never shown to the stem during evolution.",
   "tasks": [
     {
-      "id": "rs_eval_01_human_bones",
-      "question": "How many bones does the adult human body typically have?",
-      "answer": "206",
-      "aliases": ["206", "two hundred and six"],
-      "notes": "Adults; newborns have ~270 that fuse over time."
+      "id": "rs_eval_01_pyramids_country",
+      "question": "Which country has the most pyramids in the world?",
+      "answer": "Sudan",
+      "aliases": ["Sudan", "Republic of Sudan", "the Sudan"],
+      "notes": "Sudan has 200-255 Nubian pyramids (Meroe, Nuri, El-Kurru); Egypt has ~120. Snippet-skim usually returns Egypt."
     },
     {
-      "id": "rs_eval_02_mona_lisa",
-      "question": "Who painted the Mona Lisa?",
-      "answer": "Leonardo da Vinci",
-      "aliases": ["Leonardo da Vinci", "Leonardo", "da Vinci"],
-      "notes": "Currently in the Louvre."
+      "id": "rs_eval_02_atacama_language",
+      "question": "What is the primary official language of the country whose largest desert is the Atacama?",
+      "answer": "Spanish",
+      "aliases": ["Spanish", "Castilian", "Castellano", "Espanol"],
+      "notes": "Multi-hop: Atacama Desert -> Chile -> Spanish."
     },
     {
-      "id": "rs_eval_03_largest_planet",
-      "question": "What is the largest planet in our solar system?",
-      "answer": "Jupiter",
-      "aliases": ["Jupiter"],
-      "notes": "By both mass and volume."
+      "id": "rs_eval_03_st_peters_dome",
+      "question": "Who designed the dome of the basilica that is the largest Catholic church in the world?",
+      "answer": "Michelangelo",
+      "aliases": ["Michelangelo", "Michelangelo Buonarroti"],
+      "notes": "St. Peter's Basilica; Bramante started the project, Michelangelo redesigned and built the dome (completed posthumously by della Porta). Multi-hop."
     },
     {
-      "id": "rs_eval_04_apollo_11",
-      "question": "In what year did the Apollo 11 mission land humans on the Moon?",
-      "answer": "1969",
-      "aliases": ["1969"],
-      "notes": "July 20, 1969."
+      "id": "rs_eval_04_bosphorus",
+      "question": "What is the name of the strait that separates the European and Asian portions of the city of Istanbul?",
+      "answer": "Bosphorus",
+      "aliases": ["Bosphorus", "Bosporus", "the Bosphorus", "Strait of Istanbul", "Istanbul Strait"],
+      "notes": "Common wrong answers: Dardanelles (a separate Turkish strait further south), Sea of Marmara (the body of water it connects to)."
     },
     {
-      "id": "rs_eval_05_smallest_country",
-      "question": "What is the smallest country in the world by land area?",
-      "answer": "Vatican City",
-      "aliases": ["Vatican City", "Vatican", "the Vatican"],
-      "notes": "About 0.49 km^2."
+      "id": "rs_eval_05_turkey_republic",
+      "question": "In what year did the country that is home to the Hagia Sophia transition from a sultanate to a republic?",
+      "answer": "1923",
+      "aliases": ["1923"],
+      "notes": "Multi-hop: Hagia Sophia -> Turkey. Republic of Turkey proclaimed October 29, 1923; sultanate abolished Nov 1922."
     },
     {
-      "id": "rs_eval_06_general_relativity",
-      "question": "Who developed the theory of general relativity?",
-      "answer": "Albert Einstein",
-      "aliases": ["Albert Einstein", "Einstein"],
-      "notes": "Published 1915."
+      "id": "rs_eval_06_deadliest_animal",
+      "question": "Which animal is responsible for the most human deaths annually worldwide?",
+      "answer": "Mosquito",
+      "aliases": ["Mosquito", "Mosquitoes", "Mosquitos", "the mosquito"],
+      "notes": "~700,000-1,000,000 deaths/year via malaria, dengue, etc. Common wrong answers: snake, shark, human."
     },
     {
-      "id": "rs_eval_07_atmosphere_main_gas",
-      "question": "What is the most abundant gas in Earth's atmosphere by volume?",
-      "answer": "Nitrogen",
-      "aliases": ["Nitrogen", "N2", "N₂"],
-      "notes": "About 78%."
+      "id": "rs_eval_07_eiffel_purpose",
+      "question": "What event was the Eiffel Tower originally built for?",
+      "answer": "1889 World's Fair",
+      "aliases": ["1889 World's Fair", "Exposition Universelle of 1889", "1889 Exposition Universelle", "1889 Paris Exposition", "World's Fair of 1889", "Paris Exposition Universelle 1889"],
+      "notes": "Built as the entrance arch / centerpiece for the Exposition Universelle marking the centennial of the French Revolution."
     },
     {
-      "id": "rs_eval_08_most_native_speakers",
-      "question": "Which language has the most native speakers in the world?",
-      "answer": "Mandarin Chinese",
-      "aliases": ["Mandarin Chinese", "Mandarin", "Chinese (Mandarin)"],
-      "notes": "Native, not total speakers."
+      "id": "rs_eval_08_venus_day_year",
+      "question": "Which planet in our solar system has a day longer than its year?",
+      "answer": "Venus",
+      "aliases": ["Venus"],
+      "notes": "Venus's sidereal day ~243 Earth days; year ~225 Earth days. Counter-intuitive."
     },
     {
-      "id": "rs_eval_09_water_boiling_point",
-      "question": "What is the boiling point of pure water at standard atmospheric pressure (sea level), in degrees Celsius?",
-      "answer": "100",
-      "aliases": ["100", "100°C", "100 C", "100 degrees Celsius"],
-      "notes": "At 1 atm."
+      "id": "rs_eval_09_second_drink",
+      "question": "What is the most widely consumed beverage in the world after water?",
+      "answer": "Tea",
+      "aliases": ["Tea"],
+      "notes": "Common wrong answer: coffee. Tea is widely accepted as #2 by consumption volume."
     },
     {
-      "id": "rs_eval_10_first_us_president",
-      "question": "Who was the first president of the United States?",
-      "answer": "George Washington",
-      "aliases": ["George Washington", "Washington"],
-      "notes": "Took office 1789."
+      "id": "rs_eval_10_atomic_74",
+      "question": "What is the chemical symbol for the element with atomic number 74?",
+      "answer": "W",
+      "aliases": ["W", "Tungsten", "Wolfram"],
+      "notes": "Tungsten / Wolfram. Symbol from German 'Wolfram'."
     },
     {
-      "id": "rs_eval_11_titanic_year",
-      "question": "In what year did the Titanic sink?",
-      "answer": "1912",
-      "aliases": ["1912"],
-      "notes": "April 15, 1912."
+      "id": "rs_eval_11_russia_borders",
+      "question": "How many countries share a land border with Russia?",
+      "answer": "14",
+      "aliases": ["14", "fourteen"],
+      "notes": "Norway, Finland, Estonia, Latvia, Lithuania, Poland, Belarus, Ukraine, Georgia, Azerbaijan, Kazakhstan, China, Mongolia, North Korea. Often miscounted."
     },
     {
-      "id": "rs_eval_12_largest_ocean",
-      "question": "What is the largest ocean on Earth?",
-      "answer": "Pacific Ocean",
-      "aliases": ["Pacific Ocean", "the Pacific", "Pacific"],
-      "notes": "By area and volume."
+      "id": "rs_eval_12_first_women_vote",
+      "question": "What was the first self-governing country to grant women the right to vote in national elections?",
+      "answer": "New Zealand",
+      "aliases": ["New Zealand"],
+      "notes": "1893. Self-governing colony at the time. Common wrong answers: USA, UK, Finland."
     },
     {
-      "id": "rs_eval_13_water_formula",
-      "question": "What is the chemical formula for water?",
-      "answer": "H2O",
-      "aliases": ["H2O", "H₂O"],
-      "notes": "Two hydrogens and one oxygen."
+      "id": "rs_eval_13_sargasso",
+      "question": "Which sea on Earth has no land coastlines, being bounded entirely by ocean currents?",
+      "answer": "Sargasso Sea",
+      "aliases": ["Sargasso Sea", "the Sargasso Sea", "Sargasso"],
+      "notes": "In the North Atlantic, bounded by the Gulf Stream and other currents."
     },
     {
-      "id": "rs_eval_14_un_founded",
-      "question": "In what year was the United Nations founded?",
-      "answer": "1945",
-      "aliases": ["1945"],
-      "notes": "Charter signed June 1945; effective October 24, 1945."
+      "id": "rs_eval_14_50th_state_president",
+      "question": "Which U.S. president was in office when the country admitted its 50th state?",
+      "answer": "Dwight D. Eisenhower",
+      "aliases": ["Dwight D. Eisenhower", "Eisenhower", "Dwight Eisenhower", "Ike Eisenhower", "Dwight David Eisenhower"],
+      "notes": "Multi-hop: 50th state -> Hawaii (admitted August 21, 1959) -> Eisenhower."
     },
     {
-      "id": "rs_eval_15_tallest_mountain",
-      "question": "What is the tallest mountain on Earth as measured from sea level?",
-      "answer": "Mount Everest",
-      "aliases": ["Mount Everest", "Everest"],
-      "notes": "Height ~8,849 m. Mauna Kea is taller from base, but the question specifies sea level."
+      "id": "rs_eval_15_helium_discovery",
+      "question": "Which chemical element was first discovered in the spectrum of the Sun before being found on Earth?",
+      "answer": "Helium",
+      "aliases": ["Helium", "He"],
+      "notes": "Discovered 1868 by Janssen and Lockyer in the solar spectrum during an eclipse; isolated on Earth by Ramsay in 1895."
     }
   ]
 }

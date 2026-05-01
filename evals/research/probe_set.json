@@ -2,42 +2,42 @@
   "domain": "research",
   "split": "probe",
   "task_kind": "short_answer_qa",
-  "description": "SimpleQA-style factual questions with stable canonical answers. Used during stem evolution; never appears in eval_set.json.",
+  "description": "Hard short-answer questions: multi-hop, common misconceptions, indirect phrasings. Designed so a generic single-search baseline scores well below 100% and the stem has headroom to specialize. Used during stem evolution; never appears in eval_set.json.",
   "tasks": [
     {
-      "id": "rs_probe_01_gold_symbol",
-      "question": "What is the chemical symbol for gold?",
-      "answer": "Au",
-      "aliases": ["Au"],
-      "notes": "From the Latin 'aurum'."
+      "id": "rs_probe_01_churchill_successor",
+      "question": "Who succeeded Winston Churchill as British Prime Minister in 1955?",
+      "answer": "Anthony Eden",
+      "aliases": ["Anthony Eden", "Eden", "Sir Anthony Eden", "Robert Anthony Eden"],
+      "notes": "Churchill resigned April 1955; Eden took office the same month."
     },
     {
-      "id": "rs_probe_02_pride_prejudice_author",
-      "question": "Who wrote the novel 'Pride and Prejudice'?",
-      "answer": "Jane Austen",
-      "aliases": ["Jane Austen"],
-      "notes": "First published 1813."
-    },
-    {
-      "id": "rs_probe_03_berlin_wall_year",
-      "question": "In what year did the Berlin Wall fall?",
-      "answer": "1989",
-      "aliases": ["1989"],
-      "notes": "Specifically November 9, 1989."
-    },
-    {
-      "id": "rs_probe_04_australia_capital",
-      "question": "What is the capital city of Australia?",
+      "id": "rs_probe_02_murray_capital",
+      "question": "What is the capital city of the country whose largest river is the Murray?",
       "answer": "Canberra",
       "aliases": ["Canberra"],
-      "notes": "Common wrong answer: Sydney."
+      "notes": "Multi-hop: Murray River -> Australia -> Canberra. A snippet-skim agent often returns Sydney."
     },
     {
-      "id": "rs_probe_05_speed_of_light",
-      "question": "What is the speed of light in a vacuum, in meters per second (the exact defined value)?",
-      "answer": "299792458 m/s",
-      "aliases": ["299,792,458 m/s", "299792458 meters per second", "299,792,458 meters per second", "299792458"],
-      "notes": "Exact by SI definition."
+      "id": "rs_probe_03_second_largest_moon",
+      "question": "What is the second-largest moon in our solar system, by diameter?",
+      "answer": "Titan",
+      "aliases": ["Titan"],
+      "notes": "Ganymede is #1 (5,268 km); Titan #2 (5,149 km). Snippet-skim often returns Ganymede or Europa."
+    },
+    {
+      "id": "rs_probe_04_first_mars_orbiter",
+      "question": "What was the first artificial object to enter orbit around a planet other than Earth?",
+      "answer": "Mariner 9",
+      "aliases": ["Mariner 9", "Mariner-9", "NASA Mariner 9"],
+      "notes": "Entered Mars orbit November 14, 1971, just days before the Soviet Mars 2."
+    },
+    {
+      "id": "rs_probe_05_more_than_two_terms",
+      "question": "Which U.S. president served more than two terms in office?",
+      "answer": "Franklin D. Roosevelt",
+      "aliases": ["Franklin D. Roosevelt", "FDR", "Franklin Delano Roosevelt", "Franklin Roosevelt", "Roosevelt"],
+      "notes": "Four terms (1933-1945). Twenty-second Amendment (1951) later capped presidents at two."
     }
   ]
 }
