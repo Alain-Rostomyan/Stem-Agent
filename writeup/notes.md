@@ -124,6 +124,7 @@ Budget: €50–70 total.
 | Phase 1 baselines | $0.02 | $0.02 | QA + 2× research baselines |
 | Dry run (9 synth Qs) | $0.034 | $0.054 | High vs prediction; baseline iterated to step ceiling on most |
 | Locked research baseline (15 synth Qs) | $0.054 | $0.108 | 26.7% accuracy, full eval run |
+| Phase 2 smoke validation (investigate+propose live calls) | $0.039 | $0.147 | one investigate + one propose call, both successful |
 
 Local rollup: `python -m scripts.cost_summary`. Authoritative: platform.openai.com/usage.
 
@@ -216,6 +217,30 @@ a fetch_url custom tool, modifying the system prompt to enforce the structured
 template, adding shape-specific few-shots. We didn't need to over-engineer
 investigate to get useful proposals; the model did the heavy lifting from a
 modest scaffold.
+
+### 2026-05-02: Phase 2 complete — Phase 3 (real stem runs) is next
+
+All six Phase 2 modules in: investigate, propose, test_proposal, commit,
+stop_check, run_stem. CLI works: `python -m stem.run_stem --domain research`.
+40+ offline assertions in phase2_smoke_test.py all green. Project spend
+~$0.15 total against a €50–70 budget — comfortable headroom for Phase 3.
+
+The first real stem run will be the moment of truth. Two things to watch
+for:
+
+1. **Whether the proposer's sequencing mistake (modify_prompt-before-tool)
+   gets corrected by the loop.** That's the safeguard story working. If
+   instead the loop accepts a no-op proposal and plateaus on a config that
+   still can't reach web data, the rejection rule needs tightening (e.g.,
+   require strict improvement, not just non-regression).
+
+2. **Whether the stem actually writes a fetch_url tool.** It proposed it
+   in investigate. The loop has to follow through. If iteration 2 picks
+   write_tool and the resulting tool passes sanity, that's the strongest
+   single artifact we can produce for the writeup.
+
+Recommended starter run: `--max-iterations 10 --stem-budget-calls 25`
+(half the defaults). Cost cap ~$0.50. If clean, scale to defaults.
 
 ### 2026-05-01: First propose call — sequencing mistake worth keeping
 
