@@ -38,6 +38,13 @@ from stem.propose import (  # noqa: E402
     propose,
     validate_proposal,
 )
+from stem.test_proposal import (  # noqa: E402
+    TestResult,
+    apply_proposal_to_config,
+    run_sanity_check,
+    test_proposal,
+)
+from tools import registry  # noqa: E402
 
 
 PASS = "[PASS]"
@@ -361,6 +368,160 @@ def test_propose_user_prompt_shows_not_yet_enabled() -> None:
             "already-enabled tool is not listed in the not-yet-enabled section")
 
 
+def _ensure_starters_loaded() -> None:
+    if not registry.all_tools():
+        registry.load_starter_tools()
+
+
+def _make_proposal(action: str, details: dict, valid: bool = True) -> Proposal:
+    return Proposal(
+        action=action, rationale="r", details=details, valid=valid,
+        validation_errors=[] if valid else ["test forced invalid"],
+    )
+
+
+# -------------------------------------------------- apply_proposal_to_config
+
+def test_apply_modify_prompt() -> None:
+    cfg = _baseline_cfg()
+    p = _make_proposal("modify_prompt", {"new_system_prompt": "Be terse and structured."})
+    new_cfg, written = apply_proposal_to_config(p, cfg, domain="research")
+    _assert(new_cfg.system_prompt == "Be terse and structured.", "prompt replaced")
+    _assert(cfg.system_prompt == "Generic prompt.", "original config not mutated")
+    _assert(written == [], "modify_prompt has no filesystem side effects")
+
+
+def test_apply_enable_tool() -> None:
+    cfg = _baseline_cfg()
+    p = _make_proposal("enable_tool", {"tool_name": "web_search"})
+    new_cfg, written = apply_proposal_to_config(p, cfg, domain="research")
+    _assert("web_search" in new_cfg.enabled_tools, "web_search added")
+    _assert("web_search" not in cfg.enabled_tools, "original config unchanged")
+    _assert(written == [], "enable_tool has no filesystem side effects")
+
+
+def test_apply_write_tool_writes_file() -> None:
+    cfg = _baseline_cfg()
+    p = _make_proposal("write_tool", {
+        "tool_name": "fetch_url", "description": "Fetch URL",
+        "python_code": VALID_TOOL_CODE,
+    })
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        new_cfg, written = apply_proposal_to_config(
+            p, cfg, domain="research",
+            custom_tools_root=Path(d),
+        )
+        path = Path(d) / "research" / "fetch_url.py"
+        _assert(path.exists(), f"tool file written at {path}")
+        _assert(path.read_text(encoding="utf-8") == VALID_TOOL_CODE, "tool file content matches")
+        _assert(str(path) in new_cfg.custom_tools, "custom_tools updated")
+        _assert("fetch_url" in new_cfg.enabled_tools, "tool also added to enabled_tools")
+        _assert(written == [str(path)], "written list returned")
+
+
+def test_apply_add_few_shot() -> None:
+    cfg = _baseline_cfg()
+    ex = {"task": "What is 2+2?", "reasoning": "add", "answer": "4"}
+    p = _make_proposal("add_few_shot", {"example": ex})
+    new_cfg, _ = apply_proposal_to_config(p, cfg, domain="research")
+    _assert(new_cfg.few_shot_examples == [ex], "few-shot example appended")
+
+
+def test_apply_switch_architecture() -> None:
+    cfg = _baseline_cfg()  # single_loop
+    p = _make_proposal("switch_architecture", {"new_architecture": "planner_executor"})
+    new_cfg, _ = apply_proposal_to_config(p, cfg, domain="research")
+    _assert(new_cfg.architecture == "planner_executor", "architecture switched")
+    _assert(cfg.architecture == "single_loop", "original config unchanged")
+
+
+def test_apply_invalid_proposal_raises() -> None:
+    cfg = _baseline_cfg()
+    p = _make_proposal("modify_prompt", {"new_system_prompt": "x"}, valid=False)
+    raised = False
+    try:
+        apply_proposal_to_config(p, cfg, domain="research")
+    except ValueError:
+        raised = True
+    _assert(raised, "apply_proposal_to_config raises on invalid proposal")
+
+
+# ------------------------------------------------------------- sanity check
+
+def test_sanity_check_passes_with_answer() -> None:
+    _ensure_starters_loaded()
+    cfg = _baseline_cfg()
+
+    def fake_completion(messages, **kwargs):
+        # Agent immediately produces a final answer (no tool calls).
+        return _fake_chat(content="The answer is something.")
+
+    llm = LLMClient(max_calls=10, fake_completion=fake_completion, default_model="gpt-4o-mini")
+    ok, reason, ans = run_sanity_check(
+        cfg, llm, {"task": "What is the chemical symbol for water?"}, max_steps=3,
+    )
+    _assert(ok, f"sanity passes when agent gives an answer (reason={reason})")
+    _assert("something" in (ans or ""), f"sanity returns the agent's answer (got {ans!r})")
+
+
+def test_sanity_check_fails_on_empty_answer() -> None:
+    _ensure_starters_loaded()
+    cfg = _baseline_cfg()
+
+    def fake_completion(messages, **kwargs):
+        return _fake_chat(content="")  # empty answer
+
+    llm = LLMClient(max_calls=10, fake_completion=fake_completion, default_model="gpt-4o-mini")
+    ok, reason, _ = run_sanity_check(cfg, llm, {"task": "x"}, max_steps=3)
+    _assert(not ok, "sanity fails on empty answer")
+    _assert("sanity_no_answer" in reason, f"reason flags no_answer (got {reason})")
+
+
+# ------------------------------------------------------ test_proposal flows
+
+def test_test_proposal_short_circuits_on_invalid() -> None:
+    p = _make_proposal("modify_prompt", {"new_system_prompt": "x"}, valid=False)
+    llm = LLMClient(max_calls=10, fake_completion=lambda **_: _fake_chat(content="y"))
+    result = test_proposal(
+        p, _baseline_cfg(),
+        domain="research",
+        probe_tasks_path=Path("/nonexistent.json"),
+        sanity_task={"task": "x"},
+        llm=llm,
+    )
+    _assert(isinstance(result, TestResult), "returns a TestResult")
+    _assert(not result.sanity_passed, "sanity not run / not passed")
+    _assert(result.sanity_reason == "proposal_invalid", "reason flags invalid proposal")
+    _assert(llm.calls_made == 0, "no LLM calls made for invalid proposal")
+
+
+def test_test_proposal_short_circuits_on_sanity_fail() -> None:
+    """When sanity fails, the probe set is not run."""
+    _ensure_starters_loaded()
+    cfg = _baseline_cfg()
+    p = _make_proposal("modify_prompt", {"new_system_prompt": "Be terse."})
+
+    state = {"sanity_call": 0}
+
+    def fake_completion(messages, **kwargs):
+        # Always produce empty content to fail sanity.
+        state["sanity_call"] += 1
+        return _fake_chat(content="")
+
+    llm = LLMClient(max_calls=20, fake_completion=fake_completion)
+    result = test_proposal(
+        p, cfg,
+        domain="research",
+        probe_tasks_path=Path("/nonexistent.json"),  # if probe ran, this would explode
+        sanity_task={"task": "trivial"},
+        llm=llm,
+    )
+    _assert(not result.sanity_passed, "sanity failed")
+    _assert(result.probe_score == 0.0, "probe not run -> score 0")
+    _assert(result.probe_per_task == [], "probe not run -> empty per_task")
+
+
 def main() -> int:
     failures = 0
     suites = [
@@ -381,6 +542,16 @@ def main() -> int:
         ("propose.propose: end-to-end (fake LLM, write_tool)", test_propose_end_to_end_offline),
         ("propose.propose: unparseable response", test_propose_unparseable_response),
         ("propose.build_user_prompt: not-yet-enabled section", test_propose_user_prompt_shows_not_yet_enabled),
+        ("test_proposal.apply: modify_prompt", test_apply_modify_prompt),
+        ("test_proposal.apply: enable_tool", test_apply_enable_tool),
+        ("test_proposal.apply: write_tool writes file", test_apply_write_tool_writes_file),
+        ("test_proposal.apply: add_few_shot", test_apply_add_few_shot),
+        ("test_proposal.apply: switch_architecture", test_apply_switch_architecture),
+        ("test_proposal.apply: invalid proposal raises", test_apply_invalid_proposal_raises),
+        ("test_proposal.sanity: passes on answer", test_sanity_check_passes_with_answer),
+        ("test_proposal.sanity: fails on empty answer", test_sanity_check_fails_on_empty_answer),
+        ("test_proposal.test_proposal: short-circuits on invalid", test_test_proposal_short_circuits_on_invalid),
+        ("test_proposal.test_proposal: short-circuits on sanity fail", test_test_proposal_short_circuits_on_sanity_fail),
     ]
     for name, fn in suites:
         print(f"\n--- {name} ---")
