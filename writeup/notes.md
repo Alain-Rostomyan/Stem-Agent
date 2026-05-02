@@ -555,3 +555,127 @@ writeup plan.
 
 `stem/run_stem.py` doesn't currently take a starter-tool-subset
 flag — just loads all 7 by default. Adding one is ~10 lines.
+
+---
+
+### 2026-05-02 13:05–13:33: B-style ablation (QA, run_python+call_llm only)
+
+This is the briefing's mandated ablation (step 24): restrict the stem
+to `run_python` and `call_llm` only and see what specialization it
+produces. The briefing's framing was "this should force the stem to
+author custom tools." It didn't. The result is the most
+writeup-worthy run of the project so far.
+
+**Headline numbers.**
+
+| Run                           | Probe       | Eval         | Δ vs baseline |
+|-------------------------------|-------------|--------------|---------------|
+| Locked QA baseline (all 7 tools) | (n/a)    | 0.667 (10/15) | (anchor)      |
+| QA evolved (5 starter tools)  | 0.800 (4/5) | 0.800 (12/15) | +13.3pt       |
+| QA ablation (2 starter tools) | **0.800 (4/5)** | **0.267 (4/15)** | **−40.0pt**   |
+
+**The 53.3-point probe→eval gap is unique to the ablation.** Both
+research and the unrestricted QA run had probe and eval matching
+within a percentage point. The ablation matched its own probe but
+collapsed on eval. The 5-question probe set is too small to detect
+generalization failure when the agent's toolset is severely
+constrained — there isn't enough surface area for a 5-question score
+to predict 15-question performance.
+
+**Failure breakdown on the ablation eval.** 11 of 15 misses are
+`no_test_file` — the agent never produced a test artifact at all
+within `max_steps_per_task=12`. The other miss is
+`tests_fail_on_fixed` (spec misread). Only 4 passed: easy tasks
+(`unique_preserve_order`, `has_duplicates`, `range_size`, `clamp`)
+where short tests do the job.
+
+**Three big writeup observations from the ablation.**
+
+1. **The "force tool authoring" hypothesis is falsified.** The
+   ablation was DESIGNED to corner the stem into `write_tool`
+   territory: with both `run_python` and `call_llm` enabled at
+   step 0, `enable_tool` had zero candidates. The stem still chose
+   `modify_prompt → switch_architecture → add_few_shot × 8` and
+   never authored a single custom tool. Across both unrestricted
+   runs AND this restricted ablation, total custom tools authored:
+   zero. **The stem treats `write_tool` as a last resort even when
+   the menu visibly cannot include `enable_tool`.** This is a real
+   finding about the limits of self-bootstrapping under our specific
+   propose-prompt: the proposer's preference order appears to be
+   prompt → enable → few-shot → architecture → tool, with `write_tool`
+   functionally unreachable in practice.
+
+2. **The only `switch_architecture` of any run is here.** Stem
+   rationale verbatim: *"The main failure is that the agent is barely
+   using tools (2/12 steps) and is effectively guessing tests from
+   names, despite a detailed system prompt already instructing a
+   systematic workflow. Since prompt guidance alone hasn't induced
+   the desired multi-step behavior, switching to a planner_executor
+   architecture is the highest-leverage change."* This is exactly
+   the kind of meta-aware reasoning the briefing's framing wants the
+   stem to surface. The architectural change took probe from 0.000
+   to 0.200 in one step. Worth featuring as a writeup figure.
+
+3. **Five near-duplicate `binary_search` few-shots.** The proposer's
+   blind spot for existing `few_shot_examples` (first observed in
+   the research run as 2 near-duplicate Muslim-majority examples) is
+   *systemic*, not a one-off. In the ablation it produced FIVE
+   near-identical binary_search examples (steps 3, 5, 6, 7, 8) —
+   never diversifying to other problem shapes. And yet the probe
+   score climbed 0.4 → 0.4 → 0.6 → 0.8 → 0.8 across them — even
+   repetitive few-shots help on the probe set, just not enough to
+   teach the agent to *write tests in general*. On the eval, the
+   one `binary_search` task (`qa_eval_03_binary_search`) is itself
+   one of the 11 `no_test_file` failures — so the 5 few-shots didn't
+   even nail the task they were specialized on.
+
+**Why the ablation eval is so much worse than baseline (0.267 vs
+0.667).** The baseline has all 7 starter tools — including
+`write_file`, which makes "produce a test file" a one-tool-call
+operation. The ablation has only `run_python`, which means writing a
+test file requires the agent to compose a Python program that does
+file I/O. The agent under the planner_executor architecture spends
+its plan stage thinking and its executor stage often runs out of
+steps before a test file lands on disk. This is the briefing's
+intended takeaway in negative form: when you take away the right
+tools, the stem can't reliably reconstruct an agent that solves the
+domain — no matter how many few-shots you stack.
+
+**Cost: $0.227 stem + $0.209 agent = $0.437.** Roughly 4× the
+unrestricted QA stem run because the constrained agent burned ALL
+400 of its agent-budget calls during evolution (vs 87 for the
+unrestricted agent on the same probes). High agent-cost itself is a
+finding: tools ARE the cheaper path to a working agent than tokens.
+
+**Total project spend after the ablation: $1.07 authoritative
+(`python -m scripts.cost_summary`).** ~1.5% of the €50–70 budget.
+
+### Where the project stands now
+
+Briefing scope completed:
+- ✅ Locked baselines for both domains (QA 0.667; research 0.267)
+- ✅ Stem run + held-out eval on research (0.267 → 0.600)
+- ✅ Stem run + held-out eval on QA (0.667 → 0.800)
+- ✅ B-style ablation on QA (collapse to 0.267 on eval, with
+  meta-aware switch_architecture as the saving move on probes)
+
+Remaining required:
+- Final validation re-run of the saved configs (briefing step 30) —
+  cheap, ~$0.10.
+- Phase 4 writeup itself.
+
+The writeup story is now solid:
+  - Two domains, each with a clean before/after.
+  - Research lift came from prompt+enable_tool; QA lift came from
+    prompt+enable_tool+few-shot; ablation lift came from
+    architecture+few-shot but collapsed on eval.
+  - Three concrete proposer/stem limitations documented (sequencing
+    mistake we deliberately left for the loop to correct, near-
+    duplicate few-shots, never-reaches-for-write_tool).
+  - The custom-tool gap is a *finding*, not a missing experiment.
+
+If the user still has budget headroom (they will), the highest-value
+upgrades from here are: stronger agent model (gpt-4o-mini → gpt-5.1)
+to make the baseline-vs-evolved comparison harder to dismiss, and
+larger eval sets (15 → 50) to tighten confidence intervals. Both are
+optional given that the writeup story is already complete.
