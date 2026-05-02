@@ -8,7 +8,9 @@ venv/
 .env.*
 !.env.example
 runs/*.json
+runs/*.jsonl
 runs/*.log
+runs/*.md
 !runs/.gitkeep
 .pytest_cache/
 .DS_Store
