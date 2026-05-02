@@ -1,6 +1,6 @@
 # Stem Agent Writeup
 
-*A meta-agent that turns a generic agent into a domain-specialized one,
+*A meta-agent that turns a generic agent into a domain-specialised one,
 tested on research, Python QA, and a tool-starved ablation.*
 
 ---
@@ -9,7 +9,7 @@ tested on research, Python QA, and a tool-starved ablation.*
 
 The project has two agents. The **stem** is short-lived and
 domain-agnostic: given a problem class, probe tasks, and baseline traces,
-it evolves a config. The **specialized agent** is the frozen output:
+it evolves a config. The **specialised agent** is the frozen output:
 system prompt, enabled tools, few-shots, optional custom tools,
 architecture, and domain metadata.
 
@@ -28,7 +28,7 @@ I chose a "middle route" on tools. The stem starts with seven generic
 tools (`read_file`, `write_file`, `list_directory`, `run_python`,
 `run_shell_command`, `web_search`, `call_llm`) but can choose subsets or
 author new tools. The goal was to see whether one stem could grow
-different specializations.
+different specialisations.
 
 Evaluation covered two domains plus one ablation:
 
@@ -42,7 +42,7 @@ Evaluation covered two domains plus one ablation:
 
 All agent/judge evals used `gpt-4o-mini`; the stem used `gpt-5.1`.
 Per-task max steps were capped at 12. Local logged cost: **$4.71**
-(dashboard authoritative, but the key was not on my account).
+(dashboard is authoritative, but the key was not on my account).
 
 ---
 
@@ -76,7 +76,7 @@ So the research conclusion is **near parity with a small, noisy evolved
 edge**, not a robust win. This is still interesting because the research
 config used fewer tools than the generic baseline: 5 instead of 7.
 
-QA was harsher: specialization helped on v1 but did not generalize. On
+QA was harsher: specialisation helped on v1 but did not generalise. On
 v2, evolved QA was slightly worse than baseline. The ablation was robust:
 restricting the toolset caused a large collapse.
 
@@ -108,7 +108,7 @@ The same stem produced different configs for the two domains:
 | Architecture | single loop | single loop |
 | Custom tools | 0 | 0 |
 
-Two useful specializations emerged: research learned an "enumerate the
+Two useful specialisations emerged: research learned an "enumerate the
 universe, build a table, then count" workflow; QA learned the key testing
 failure mode of deriving expected outputs from buggy code.
 
@@ -152,7 +152,7 @@ The ablation matched the unrestricted QA probe score (0.800) but scored
 `no_test_file`: with only `run_python` and `call_llm`, writing a pytest
 file requires composing Python file I/O. The planner/executor
 architecture also spends one step planning, so the agent often ran out
-of its 12-step budget before creating the artifact.
+of its 12-step budget before creating the artefact.
 
 Tool lesson: taking away `write_file` changes the effective task
 difficulty, and five probes are too few under tool constraints.
@@ -168,7 +168,7 @@ clean v2 pairs produced only a +1.5 pt mean lift.
 This is the main methodological lesson: **15 tasks were too few, and one
 research seed was not enough even at n=50.** The original story was
 "the stem improved both domains"; the final story is more honest:
-specialization changed agent behavior, but reliable generalization was
+specialisation changed agent behaviour, but reliable generalisation was
 weak except for the ablation failure, which was very stable.
 
 ### 3.5 A framework bug surfaced at domain transfer
@@ -194,12 +194,12 @@ domain-boundary tests, not only tests on the first domain that works.
 
 ---
 
-## Bottom Line
+## Conclusion
 
-The stem did produce different specialized agents for different domains,
+The stem did produce different specialised agents for different domains,
 and the git/probe loop made the evolution auditable. But the stronger
 result is the negative one: the original small eval overstated the
-benefit. On broader and repeated evals, QA specialization did not beat
-baseline and research specialization was near parity. The most robust
+benefit. On broader and repeated evals, QA specialisation did not beat
+baseline and research specialisation was near parity. The most robust
 finding is that the tool-starved ablation collapsed, showing that the
 right basic tools matter more than many few-shots or prompt edits.
