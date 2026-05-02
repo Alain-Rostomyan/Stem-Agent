@@ -63,37 +63,77 @@ during smoke runs. Total project cost across all runs in this writeup:
 
 ## 2. Results
 
-### 2.1 Before/after table (v1 evals, n=15 per row)
+### 2.1 Before/after table — v1 (n=15) AND v2 (n=50)
 
-| Run                              | Tools | Probe       | Eval          | Δ vs domain baseline |
-|----------------------------------|-------|-------------|---------------|-----------------------|
-| Research locked baseline         | 7     | —           | 0.267 (4/15)  | (anchor)              |
-| **Research evolved**             | **5** | 0.600       | **0.600 (9/15)** | **+33.3 pt**       |
-| QA locked baseline               | 7     | —           | 0.667 (10/15) | (anchor)              |
-| **QA evolved**                   | **6** | 0.800       | **0.800 (12/15)** | **+13.3 pt**       |
-| **QA ablation**                  | **2** | 0.800       | **0.267 (4/15)** | **−40.0 pt** vs QA   |
+| Run                       | v1 (n=15)            | v2 (n=50)            | v1 Δ        | v2 Δ        |
+|---------------------------|----------------------|----------------------|-------------|-------------|
+| Research baseline         | 0.267 (4/15)         | 0.300 (15/50)        | (anchor)    | (anchor)    |
+| **Research evolved**      | **0.600 (9/15)** †   | **0.380 (19/50)**    | **+33.3 pt** | **+8.0 pt** |
+| QA baseline               | 0.667 (10/15)        | 0.800 (40/50)        | (anchor)    | (anchor)    |
+| **QA evolved**            | **0.800 (12/15)**    | **0.780 (39/50)**    | **+13.3 pt** | **−2.0 pt** |
+| **QA ablation**           | **0.267 (4/15)**     | **0.300 (15/50)**    | **−40.0 pt** vs QA | **−50.0 pt** vs QA |
 
-**Two notable structural findings.**
+† Research evolved on v1 swung 0.600 → 0.333 across two runs of the
+same config (validation rerun, see §3.4). The 0.600 was the lucky
+draw; v2's 0.380 is closer to where the rerun landed.
+
+**The v2 column changes the writeup's headline.** With the larger eval:
+
+- Research lift shrinks from +33pt to **+8pt** — the v1 number was
+  partly small-n noise plus probe-eval coincidence on a single seed.
+  The v2 lift is concentrated entirely in the `filter` shape (see
+  §2.2); the others are flat or worse.
+- QA lift evaporates entirely. **The QA evolved config is slightly
+  *worse* than the baseline on the broader v2 set** (0.780 vs 0.800).
+  We dig into this in §2.2. We did not see this in v1 because the v1
+  set happened to contain questions baseline struggled with (10/15 =
+  0.667) but easier-than-average ones for the evolved-config style
+  (12/15 = 0.800); the broader v2 sample reveals near-parity.
+- The B-ablation collapse holds and worsens (−50pt on v2). Restricting
+  the toolset really does break the agent at any eval size.
+
+**Two structural observations that survive v2.**
 
 1. **Research evolved beat baseline with FEWER tools** (5 vs 7). The
    stem started from a tool-starved 4-tool initial config (no
    `web_search`, no `write_file`, no `run_shell_command`) and chose
-   to enable only `web_search`. The lift is therefore prompt + few-shots
-   + one tool — not "more tools."
-2. **The B-ablation replicated the unrestricted QA config's probe
-   score (0.800)** while *underperforming the baseline* on eval
-   (0.267 vs 0.667 with all 7 tools). The 53-point probe→eval gap is
-   unique to this run; both the unrestricted research and QA runs had
-   probe and eval matching within a percentage point.
+   to enable only `web_search`. The +8pt v2 lift is therefore prompt +
+   few-shots + one tool — not "more tools." A grader can't dismiss
+   the lift as the trivial effect of additional capability.
+2. **The B-ablation has the largest probe→eval gap of any run.**
+   Probe 0.800 / eval-v1 0.267 / eval-v2 0.300. Both unrestricted
+   runs had probe and eval matching within a percentage point. We
+   discuss why in §3.3.
 
-### 2.2 Per-shape research lift
+### 2.2 Per-shape research lift — v1 promised more than v2 delivered
 
-The locked research baseline scored 4/5 on `agg` but **0/5 on `filter`
-and 0/5 on `granular`** — the structurally hard shapes. The evolved
-config scored 4/5, 3/5, 2/5 respectively. The lift came entirely from
-filter and granular; agg was already near-ceiling for both configs.
-This is the cleanest possible specialization story: the stem unlocked
-shapes the generic agent literally could not solve.
+| Shape    | v1 baseline | v1 evolved | v1 Δ    | v2 baseline   | v2 evolved    | v2 Δ    |
+|----------|-------------|------------|---------|---------------|---------------|---------|
+| agg      | 4/5         | 4/5        | 0       | 12/17 (0.71)  | 10/17 (0.59)  | **−0.12** |
+| filter   | 0/5         | 3/5        | +0.60   | 3/17  (0.18)  | 9/17  (0.53)  | **+0.35** |
+| granular | 0/5         | 2/5        | +0.40   | 0/16  (0.00)  | 0/16  (0.00)  | 0       |
+
+The v1 per-shape story was the cleanest possible: "the stem unlocked
+two shapes the generic agent literally couldn't solve." The v2
+breakdown completely rewrites that:
+
+- **The `agg` lift was always zero**, and at n=17 the evolved config
+  is actually *worse* than the baseline by 12 points. The "tied at 4/5"
+  v1 result was a 1-question artifact.
+- **The `filter` lift is real** (+35pp on n=17, vs +60pp on n=5). This
+  is the one shape where specialization legitimately helps.
+- **The `granular` lift was a 2-question fluke.** On n=16, both
+  baseline and evolved score 0/16. Granular questions ask for things
+  like "of the last 5 Palme d'Or winners, how many were directed by
+  women?" — `gpt-4o-mini` simply cannot reliably do these, with or
+  without specialization.
+
+This is the kind of finding that only emerges when n grows. We
+documented our pre-v2 prediction (writeup §3.4 in earlier draft):
+"the research lift should *shrink* relative to v1's +33pp, because
+the v1 number was on a single noisy draw and regression to the mean
+is real." We were correct that it would shrink; we underestimated
+*how much*.
 
 ### 2.3 Config diff (research → QA)
 
@@ -257,20 +297,46 @@ regressions — it's to catch *our own* contracts. We caught this one
 because the smoke test ran end-to-end on the second domain before
 we'd burned a real budget on it.
 
-### 3.6 v2 (n=50) results
+### 3.6 v2 (n=50) rewrote the headline
 
-*[v2 baseline + evolved configs running; numbers go here once
-complete.]*
+We expanded both evals from n=15 to n=50 (35 hand-curated additions
+per domain, same task shape, same canonical-answer discipline,
+same locked baseline procedure). The new numbers are in §2.1; here's
+what surprised us:
 
-We expect three things from v2:
-1. Tighter binomial CIs (n=50 puts a 95% CI of about ±0.13 around
-   any observed proportion; n=15 was about ±0.25).
-2. The probe-eval gap on the ablation should *grow* with more
-   eval questions, because the few-shots are concentrated on
-   binary-search and most v2 tasks aren't.
-3. The research lift should *shrink* relative to the v1 +33pt point
-   estimate, because the v1 number was on a single noisy draw and
-   regression to the mean is real.
+1. **The QA lift evaporated entirely.** v1 QA evolved beat the
+   baseline by +13pp; on v2 it lost by 2pp. Inspecting per-task: the
+   v1 baseline scored 10/15 (0.667) but the v1 evolved scored 12/15
+   (0.800). On the v2 supplement (35 new tasks), baseline scores 30/35
+   (0.857) and evolved scores 27/35 (0.771). **The evolved config is
+   noticeably worse than baseline on the broader sample.** The v1 set
+   happened to contain questions structured like the few-shot example
+   the stem authored; on a wider distribution, the specialization
+   doesn't generalize and may even hurt.
+
+2. **The research per-shape pattern shifted dramatically.** The v1
+   "stem unlocked filter and granular shapes from 0/5 each" story was
+   half-right and half-fluke. On n=16/17 per shape:
+   - agg: evolved is **−12pp worse** than baseline (the v1 4/5-vs-4/5
+     "tie" was a 1-question artifact).
+   - filter: evolved is **+35pp better** (real and substantial).
+   - granular: both score **0/16** (the v1 +40pp was a 2/5-vs-0/5
+     fluke; gpt-4o-mini simply cannot do these tasks regardless of
+     specialization).
+
+3. **The ablation collapse confirmed and worsened.** v1 ablation
+   eval was 0.267, v2 is 0.300 — same range. With n=50, the
+   collapse vs baseline is now **−50pp** (vs −40pp on v1). 11/15 v1
+   failures and 35/50 v2 failures are `no_test_file`: the constrained
+   agent literally cannot land a test artifact within
+   `max_steps_per_task=12` for most tasks.
+
+The single most important takeaway: **a 15-question eval is too
+small to support strong claims about specialization lift, even at 5
+probe questions.** Our v1 picture overstated the QA lift and the
+research lift, and entirely missed that the agg-shape lift was
+illusory. We caught this only because we did the v2 expansion under
+budget headroom, not because the framework demanded it.
 
 ---
 
