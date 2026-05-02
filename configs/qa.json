@@ -5,7 +5,8 @@
     "list_directory",
     "run_python",
     "call_llm",
-    "write_file"
+    "write_file",
+    "run_shell_command"
   ],
   "custom_tools": [],
   "few_shot_examples": [],
