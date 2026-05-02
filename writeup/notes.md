@@ -679,3 +679,67 @@ upgrades from here are: stronger agent model (gpt-4o-mini → gpt-5.1)
 to make the baseline-vs-evolved comparison harder to dismiss, and
 larger eval sets (15 → 50) to tighten confidence intervals. Both are
 optional given that the writeup story is already complete.
+
+---
+
+## 2026-05-02 17:00 — v2 expansion findings rewrite the headline
+
+Extended both eval sets from 15 to 50 questions (15 v1 + 35 new
+hand-curated). Same task shapes, same canonical-answer discipline,
+build_eval_v2.py verifies every QA pair imports cleanly. Locked new
+v2 baselines and re-ran all three evolved configs against v2.
+
+**The v2 numbers are mostly bad news for our v1 claims.**
+
+| Run                | v1            | v2            | Δ on lift   |
+|--------------------|---------------|---------------|-------------|
+| Research baseline  | 0.267 (4/15)  | 0.300 (15/50) | (anchor)    |
+| Research evolved   | 0.600 (9/15)* | 0.380 (19/50) | +33pt → +8pt |
+| QA baseline        | 0.667 (10/15) | 0.800 (40/50) | (anchor)    |
+| QA evolved         | 0.800 (12/15) | 0.780 (39/50) | +13pt → -2pt |
+| QA ablation        | 0.267 (4/15)  | 0.300 (15/50) | -40pt → -50pt |
+
+*v1 first-run; the validation rerun on identical config was 0.333.
+
+**Three things v1 hid that v2 surfaced:**
+
+1. **The QA "lift" was largely a v1-set artifact.** v1 baseline got
+   10/15 = 0.667 on questions that happened to play to whatever the
+   v1 specialization addressed; on the 35 new tasks of v2, baseline
+   got 30/35 = 0.857 and evolved got 27/35 = 0.771. Specialization
+   actively HURTS generalization on the broader set.
+
+2. **The research "filter and granular both unlocked" story is half
+   wrong.** Per-shape on v2 (n=17/17/16):
+   - agg: baseline 12/17 (0.71), evolved 10/17 (0.59) — evolved is
+     -12pp WORSE. The v1 4/5-vs-4/5 "tied" was a 1-question artifact.
+   - filter: baseline 3/17 (0.18), evolved 9/17 (0.53) — REAL +35pp
+     lift. This is the only shape where specialization legitimately
+     helps. (v1 +60pp overstated this too.)
+   - granular: 0/16 vs 0/16 — both score zero. The v1 +40pp lift was
+     2/5 vs 0/5, a 2-question fluke. gpt-4o-mini cannot do granular
+     synthesis questions, with or without specialization.
+
+3. **The ablation collapse intensifies.** v1 was -40pp vs baseline,
+   v2 is -50pp. 35 of 50 v2 ablation failures were `no_test_file`,
+   same pattern as v1. Constraining the toolset really does break
+   the agent regardless of eval size.
+
+**This is a great writeup story.** "We built it, the v1 numbers
+looked great, then we did due diligence with a bigger eval and the
+lift mostly evaporated except for the filter shape on research" is
+exactly the kind of self-correcting experimental rigor the briefing
+asks for. The honest result is a much smaller specialization
+benefit than v1 suggested, concentrated in a single shape on a
+single domain, with a real-but-limited story.
+
+**Multi-seed for variance bars now running.** 4 additional seeds per
+condition (baseline + evolved on research v2). Cost ~$1.50 ish.
+Will get mean ± std for the headline number. QA didn't need
+multi-seed (validation rerun showed 0.000 variance for QA evolved;
+the pytest scoring is deterministic given the test code).
+
+**Cost so far: $2.17** (per `python -m scripts.cost_summary`).
+About 3% of the €50–70 budget. Multi-seed will add ~$1.50, taking
+us to ~$3.70.
+
