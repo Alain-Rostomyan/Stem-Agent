@@ -96,26 +96,46 @@ def _format_tasks_block(tasks: list[dict[str, Any]], max_tasks: int = 5) -> str:
 def summarize_trace(trace: dict[str, Any], max_steps: int = 12) -> str:
     """Compress a per-task trace record (from the eval runner) into a few lines.
 
-    Expects the shape produced by `evals/research/runner.py:run_research_eval`
-    (and similarly for QA): keys include `task_id`, `question`, `canonical`,
-    `candidate`, `correct`, `agent_steps`, `agent_stopped`. Tool-call detail
-    isn't in this record — we surface what we have.
+    Two shapes show up in practice:
+      - Research: `task_id`, `question`, `canonical`, `candidate`, `correct`,
+        `agent_steps`, `agent_stopped`, plus optional `judge_rationale`.
+      - QA: `task_id`, `score` (0/1), `reason` (e.g. "no_tests",
+        "buggy_passed", "fixed_failed"), `buggy`, `fixed`, `agent_final`,
+        `agent_steps`, `agent_stopped`. There's no natural-language question
+        or canonical answer; the spec lives in the task set, not the per-task
+        record.
     """
     parts: list[str] = []
     parts.append(f"task_id: {trace.get('task_id', '?')}")
-    q = (trace.get("question") or "").strip().splitlines()[0]
-    if q:
-        parts.append(f"question: {q[:200]}")
-    parts.append(f"canonical_answer: {trace.get('canonical', '?')}")
-    cand = (trace.get("candidate") or "").strip()
-    if cand:
-        parts.append(f"agent_answer: {cand[:300]}")
-    else:
-        parts.append("agent_answer: (none — agent never produced a final answer)")
+
+    # Research-style fields, included only when present and non-empty.
+    q_lines = (trace.get("question") or "").strip().splitlines()
+    if q_lines:
+        parts.append(f"question: {q_lines[0][:200]}")
+    if trace.get("canonical") is not None:
+        parts.append(f"canonical_answer: {trace.get('canonical')}")
+    if "candidate" in trace:
+        cand = (trace.get("candidate") or "").strip()
+        if cand:
+            parts.append(f"agent_answer: {cand[:300]}")
+        else:
+            parts.append("agent_answer: (none — agent never produced a final answer)")
+
+    # QA-style fields. `reason` is the highest-signal diagnostic for the stem.
+    if "score" in trace:
+        parts.append(f"score: {trace.get('score')}; reason: {trace.get('reason', '?')}")
+    if "agent_final" in trace:
+        af = (trace.get("agent_final") or "").strip()
+        if af:
+            parts.append(f"agent_final (truncated): {af[:400]}")
+
+    correct_field = trace.get("correct")
+    if correct_field is None and "score" in trace:
+        correct_field = bool(trace.get("score"))
     parts.append(
         f"steps: {trace.get('agent_steps', '?')}/{max_steps}; "
         f"stopped_reason: {trace.get('agent_stopped', '?')}; "
-        f"correct: {trace.get('correct', '?')}"
+        f"correct: {correct_field if correct_field is not None else '?'}"
     )
     rationale = (trace.get("judge_rationale") or "").strip()
     if rationale:

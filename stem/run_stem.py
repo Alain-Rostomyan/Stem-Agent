@@ -121,11 +121,21 @@ def _commit_initial_config(
     repo_root: Path,
     domain: str,
 ) -> str:
-    """Save the starting config and commit it as 'evolution step 0'."""
+    """Save the starting config and commit it as 'evolution step 0'.
+
+    Idempotent: if the config already matches what's on disk and HEAD, return
+    HEAD's sha without making a new commit. This lets the operator re-run the
+    stem after a crash without manual `git reset` surgery.
+    """
     save_config(initial_config, config_path)
     rc, _, err = _git(["add", "--", str(config_path)], cwd=repo_root)
     if rc != 0:
         raise RuntimeError(f"git add (initial config) failed: {err}")
+    # Nothing staged means the config is already at HEAD — treat as success.
+    rc_diff, _, _ = _git(["diff", "--cached", "--quiet"], cwd=repo_root)
+    if rc_diff == 0:
+        rc, sha, _ = _git(["rev-parse", "HEAD"], cwd=repo_root)
+        return sha if rc == 0 else ""
     rc, _, err = _git(
         ["commit", "-m", f"evolution step 0: initial config for domain={domain}"],
         cwd=repo_root,
