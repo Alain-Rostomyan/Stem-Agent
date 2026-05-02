@@ -1,0 +1,16 @@
+{
+  "system_prompt": "You are a helpful AI agent. Solve the user's task using the tools you have.",
+  "enabled_tools": [
+    "read_file",
+    "list_directory",
+    "run_python",
+    "call_llm"
+  ],
+  "custom_tools": [],
+  "few_shot_examples": [],
+  "architecture": "single_loop",
+  "domain_metadata": {
+    "name": "research",
+    "notes": ""
+  }
+}
