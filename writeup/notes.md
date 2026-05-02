@@ -276,3 +276,82 @@ took, especially where things didn't go as expected"). The imperfect proposer
 What we lose by leaving it: one wasted evolution iteration's worth of LLM
 calls — call it ~$0.05 — every time the proposer makes a sequencing mistake.
 That's an acceptable cost given budget headroom (~$50+ remaining).
+
+---
+
+## Phase 3 — First Stem Run (complete, smoke run with 10-iter / 25-stem-call cap)
+
+### 2026-05-02 12:07: Run finished, plateau-stopped at iter 5
+
+**Headline.** Final probe score **0.600** on the 5-question probe set, up from
+**0.267** baseline — a +33pt lift in 5 iterations. Cost: $0.171 total
+($0.103 stem + $0.067 agent + $0.001 judge). Well under the $0.50 cap.
+Stop reason: plateau (3 successive accepted iterations at probe=0.600).
+
+**Evolution path (commits in master).**
+- step 0: initial config (no probe)
+- step 1: enable_tool(web_search) → 0.400 ACCEPT
+- step 2: modify_prompt (micro-plan + scratchpad + stop-rule, 6.1k chars) → 0.600 ACCEPT
+- step 3: add_few_shot (Muslim-majority of top-10 populous, count=4) → 0.600 ACCEPT (tie kept)
+- step 4: add_few_shot → 0.400 REJECT (rolled back — no commit in log)
+- step 5: add_few_shot (Muslim-majority of top-10 populous, count=3) → 0.600 ACCEPT
+
+**Watchpoint #1 (sequencing): RESOLVED POSITIVELY.** Captured in the 12:01
+entry above. tl;dr: the live run picked enable_tool(web_search) first,
+fixing the smoke-test sequencing failure.
+
+**Watchpoint #2 (fetch_url custom tool): RESOLVED NEGATIVELY.** The stem
+never wrote fetch_url, even though the investigation analysis explicitly
+suggested it as an "Optional custom helper tool." The loop preferred
+prompt-tweaks and few-shots throughout. This is fine — fetch_url was
+flagged optional, and the score still climbed to 0.600 without it. But
+it does mean the writeup can't claim "the stem authored a custom tool";
+that capability is in the harness but unexercised on this run.
+
+**Surprise: the proposer added two near-duplicate few-shots about the same
+question, with contradicting answers.** Step 3's example classifies
+Nigeria as Muslim-majority (count=4); step 5's example classifies Nigeria
+as religiously mixed (count=3). Same question, different worked answer,
+both now in `configs/research.json`. The proposer doesn't appear to track
+what's already in `few_shot_examples` when authoring a new one — the
+second example reads as if written from scratch with no awareness of the
+first. Worth noting in the writeup as a real proposer limitation. Also
+worth checking whether this hurt the agent: the few-shots-count went from
+0 to 1 to 2 with probe stuck at 0.600 either way, so the contradiction
+doesn't seem to have actively poisoned the score, but it's not earning
+its keep either.
+
+**Step 4 rejection (rollback story works).** The third add_few_shot
+proposal dropped probe to 0.400 and got rolled back to step 3's HEAD via
+`git reset --hard`. No step-4 commit appears in the log. This is the
+exact scenario the commit/rollback module was built for, and it caught a
+regression on its first real opportunity.
+
+**Plateau detection: also works.** Three successive iterations at probe=
+0.600 (steps 2, 3, 5) triggered the stop_check before max_iterations=10.
+This is the right call — continuing to spend stem calls on a flat curve
+is wasteful. But it also means we don't know whether the stem WOULD have
+proposed fetch_url given more rope; the plateau-stop foreclosed that.
+
+**Tool-budget headroom.** Stem made 6 calls of 25 budgeted (24%). Agent
+made 135 of 400 (34%). Judge 25 of 200 (13%). Plenty of room to run a
+real 50-call evolution if we want it, but the smoke run already gives a
+clean phase-3 result and a writeup-worthy story.
+
+**Probe vs. eval gap.** The 0.600 number is on the 5-question probe set
+the stem trained against. The locked baseline of 0.267 was on the
+15-question eval set. These are not directly comparable; we should
+re-run the evolved config on the full eval set before claiming a
+generalization win. That's the next concrete action.
+
+**Decision pending.** Two options for next step:
+  1. Run the evolved config (`configs/research.json` at HEAD) on the full
+     15-question eval set to get a baseline-comparable score. ~$0.10.
+  2. Run a second, longer stem evolution (defaults: 20 iter, 50 stem
+     calls) and see whether it goes farther — especially whether plateau
+     is hit again, or whether it eventually reaches for fetch_url /
+     planner_executor architecture / etc. ~$0.60–1.30.
+
+Option 1 is the discipline move (verify probe→eval generalization before
+spending more on evolution). Option 2 is the explore move. Both are
+cheap; can do option 1 first and option 2 if option 1 looks solid.
