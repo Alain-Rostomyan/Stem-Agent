@@ -323,6 +323,15 @@ def main() -> int:
                    help="Path to a baseline_<domain>.json result; its per_task records "
                         "are used as baseline traces for investigate. Defaults to "
                         "runs/baseline_<domain>.json.")
+    p.add_argument("--starter-tools", default=None,
+                   help="Comma-separated subset of starter tools to expose to the stem "
+                        "(e.g. 'run_python,call_llm' for the B-style ablation). When set, "
+                        "the initial config's enabled_tools is also intersected with this "
+                        "subset. Defaults to all registered starter tools.")
+    p.add_argument("--run-name", default=None,
+                   help="Override the output config and run-log basename. Defaults to "
+                        "--domain. Use this to run an ablation without clobbering the "
+                        "regular configs/<domain>.json (e.g. --run-name qa_ablation).")
     p.add_argument("--dry-run", action="store_true",
                    help="Skip the API key check and exit before running.")
     args = p.parse_args()
@@ -340,15 +349,28 @@ def main() -> int:
         return 2
 
     registry.load_starter_tools()
-    starter_tool_names = sorted(registry.all_tools().keys())
+    all_starter_names = sorted(registry.all_tools().keys())
+    if args.starter_tools:
+        requested = [s.strip() for s in args.starter_tools.split(",") if s.strip()]
+        unknown = [s for s in requested if s not in all_starter_names]
+        if unknown:
+            print(f"ERROR: unknown starter tool(s): {unknown}. "
+                  f"Known: {all_starter_names}", file=sys.stderr)
+            return 2
+        starter_tool_names = sorted(requested)
+        print(f"starter tool subset: {starter_tool_names} "
+              f"(of {len(all_starter_names)} registered)")
+    else:
+        starter_tool_names = all_starter_names
 
+    run_name = args.run_name or args.domain
     ts = time.strftime("%Y%m%dT%H%M%S")
     log_dir = ROOT / "runs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    stem_log = log_dir / f"stem_{args.domain}_{ts}_stem.jsonl"
-    agent_log = log_dir / f"stem_{args.domain}_{ts}_agent.jsonl"
-    judge_log = log_dir / f"stem_{args.domain}_{ts}_judge.jsonl"
-    evolution_log_path = log_dir / f"stem_{args.domain}_{ts}.json"
+    stem_log = log_dir / f"stem_{run_name}_{ts}_stem.jsonl"
+    agent_log = log_dir / f"stem_{run_name}_{ts}_agent.jsonl"
+    judge_log = log_dir / f"stem_{run_name}_{ts}_judge.jsonl"
+    evolution_log_path = log_dir / f"stem_{run_name}_{ts}.json"
 
     stem_llm = LLMClient(
         max_calls=args.stem_budget_calls,
@@ -369,7 +391,18 @@ def main() -> int:
         )
 
     probe_path = ROOT / "evals" / args.domain / "probe_set.json"
-    config_out = ROOT / "configs" / f"{args.domain}.json"
+    config_out = ROOT / "configs" / f"{run_name}.json"
+
+    # Build the initial config. When the operator restricted the starter set
+    # (e.g. for the B-style ablation), the initial config's enabled_tools must
+    # be the intersection of default_config()'s tools with the allowed subset
+    # — otherwise the agent would start with tools the stem isn't even allowed
+    # to know about.
+    initial_cfg = default_config(domain=args.domain)
+    if args.starter_tools:
+        initial_cfg.enabled_tools = [
+            t for t in initial_cfg.enabled_tools if t in starter_tool_names
+        ]
 
     baseline_path = (
         Path(args.baseline_result) if args.baseline_result
@@ -406,7 +439,7 @@ def main() -> int:
         elif "score" in rec:
             print(f"    probe {tid}: score={rec['score']}")
 
-    print(f"Running stem on domain={args.domain}...")
+    print(f"Running stem on domain={args.domain} (run_name={run_name})...")
     log = run_stem_evolution(
         domain=args.domain,
         domain_description=domain_description,
@@ -417,6 +450,7 @@ def main() -> int:
         agent_llm=agent_llm,
         judge_llm=judge_llm,
         starter_tool_names=starter_tool_names,
+        initial_config=initial_cfg,
         baseline_traces=baseline_traces,
         max_iterations=args.max_iterations,
         max_steps_per_task=args.max_steps_per_task,
