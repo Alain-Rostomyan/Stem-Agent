@@ -743,3 +743,69 @@ the pytest scoring is deterministic given the test code).
 About 3% of the €50–70 budget. Multi-seed will add ~$1.50, taking
 us to ~$3.70.
 
+---
+
+## 2026-05-02 18:40 - sequential research rerun after failed parallel seeds
+
+The parallel multi-seed research run should NOT be used as evidence.
+All 8 processes exited normally, but the scores collapsed because almost
+every task had `urls=0`. That was not an OpenAI API rate limit in the
+usual sense; the run was dominated by web-search starvation / network
+issues from hammering DuckDuckGo in parallel. It also overwrote the local
+ignored canonical `runs/baseline_research_v2.json`, so future summaries
+should use timestamped files or regenerate carefully.
+
+First retry inside the sandbox also failed, but differently: every task
+had `agent_stopped=error`, judge rationale was `APIConnectionError`, and
+both agent/judge `calls_made` were 0. That was a sandbox/network-access
+problem, not an API spend/rate-limit problem.
+
+Reran research v2 sequentially with network access:
+
+| Condition | Earlier v2 in writeup | Sequential rerun |
+|-----------|------------------------|------------------|
+| Research baseline | 0.300 (15/50) | 0.380 (19/50) |
+| Research evolved | 0.380 (19/50) | 0.500 (25/50) |
+| Lift | +8pp | +12pp |
+
+Sequential per-shape:
+- baseline: agg 11/17, filter 6/17, granular 2/16
+- evolved: agg 11/17, filter 9/17, granular 5/16
+
+Interpretation: the evolved research config still beats baseline, and
+the lift is again concentrated in the harder shapes, but the variance is
+large enough that a single rerun should not replace the writeup's caution.
+The honest claim is now: v2 shrank the v1 headline, but sequential reruns
+still show a modest evolved-vs-baseline research advantage. Mean +/- std
+would require more sequential seeds, not parallel ones.
+
+Cost update: local `python -m scripts.cost_summary` now reports $3.30
+total. The two successful sequential research v2 reruns cost about $0.33
+combined (baseline ~$0.146, evolved ~$0.184). The invalid parallel
+multi-seed attempt cost real money too and is included in the $3.30. The
+OpenAI dashboard remains authoritative.
+
+---
+
+## 2026-05-02 20:20 - four clean sequential research-v2 pairs
+
+Ran `python -m scripts.sequential_research --pairs 4 --model gpt-4o-mini
+--sleep-s 30`, which alternates baseline/evolved runs sequentially and writes
+timestamped outputs only. This avoided the canonical overwrite issue and did
+not reproduce the parallel-run search starvation.
+
+Results:
+- baseline: mean 0.370, std 0.030, min 0.340, max 0.420
+- evolved: mean 0.385, std 0.033, min 0.360, max 0.440
+
+This changes the writeup again. The earlier sequential rerun
+(baseline 0.380, evolved 0.500) was a favorable draw for evolved. Across
+four clean pairs, the lift is only +1.5pp, i.e. near parity. The honest
+claim is no longer "research specialization robustly improves v2"; it is:
+the stem produced a more constrained research agent that roughly matches
+the all-tools baseline, with at most a small noisy edge.
+
+Cost after this run: local `scripts.cost_summary` reports $4.71 total.
+The 4-pair sequential run added about $1.42. Stronger-model comparison is
+still undone; with submission time under an hour, the writeup is higher
+priority than a partial `gpt-5.1-mini` run.

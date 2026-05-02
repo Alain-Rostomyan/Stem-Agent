@@ -38,12 +38,16 @@ python -m scripts.run_baseline --domain qa --split eval --config-path configs/qa
 python -m scripts.run_baseline --domain research --split eval_v2                                # baseline v2
 python -m scripts.run_baseline --domain qa --split eval_v2                                      # baseline v2
 # ...and the same --config-path forms above with --split eval_v2
+
+# Sequential research variance check used in the writeup
+python -m scripts.sequential_research --pairs 4 --model gpt-4o-mini --sleep-s 30
 ```
 
 **Cost.** Each `gpt-4o-mini` 15-task eval costs ~$0.05. The 50-task v2 evals run
 about 3× that. The ablation costs ~10× as much because the constrained agent
 burns its full call budget on each task. Expect $0.10–$0.50 to reproduce the v1
-numbers, $0.50–$2 for v2.
+numbers, $0.50–$2 for v2, and about $1.4 for the 4-pair sequential research
+variance check.
 
 **Determinism.** QA is deterministic (pytest scoring is fixed given the test code).
 Research is *not* — the agent's first DDG result determines the trajectory, and the
@@ -129,6 +133,6 @@ python -m scripts.run_baseline --domain qa --split eval_v2 --config-path configs
   during the project (the briefing asks specifically for "the path your
   thinking took"). The 4-page `writeup/writeup.md` is structured from those
   notes.
-- The total project cost of every LLM call quoted in the writeup is **$1.07**
+- The total project cost of every LLM call quoted in the writeup is **$4.71**
   (per `python -m scripts.cost_summary`; `platform.openai.com/usage` is
-  authoritative).
+  authoritative, but the API key was not on the author's account).
