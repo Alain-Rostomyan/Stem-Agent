@@ -6,7 +6,7 @@
   ],
   "custom_tools": [],
   "few_shot_examples": [],
-  "architecture": "single_loop",
+  "architecture": "planner_executor",
   "domain_metadata": {
     "name": "qa",
     "notes": ""
