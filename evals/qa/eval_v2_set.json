@@ -1,0 +1,458 @@
+{
+  "domain": "qa",
+  "split": "eval",
+  "task_kind": "seeded_bug_python",
+  "description": "Held-out QA tasks (v2 = v1 + 35 hand-curated additions for tighter CIs). Same shape as probe_set.json. Never shown to the stem during evolution.",
+  "tasks": [
+    {
+      "id": "qa_eval_01_is_prime",
+      "spec": "is_prime(n: int) -> bool returns True iff n is a prime (integer greater than 1 with no divisors other than 1 and itself).",
+      "function_name": "is_prime",
+      "module_name": "target",
+      "buggy_code": "def is_prime(n):\n    if n < 2:\n        return True\n    for i in range(2, int(n ** 0.5) + 1):\n        if n % i == 0:\n            return False\n    return True\n",
+      "fixed_code": "def is_prime(n):\n    if n < 2:\n        return False\n    for i in range(2, int(n ** 0.5) + 1):\n        if n % i == 0:\n            return False\n    return True\n",
+      "bug_hint": "returns True for n<2 (treats 0 and 1 as prime)"
+    },
+    {
+      "id": "qa_eval_02_fibonacci",
+      "spec": "fibonacci(n: int) -> int returns the nth Fibonacci number with fibonacci(0) == 0, fibonacci(1) == 1, fibonacci(n) = fibonacci(n-1) + fibonacci(n-2).",
+      "function_name": "fibonacci",
+      "module_name": "target",
+      "buggy_code": "def fibonacci(n):\n    a, b = 1, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a\n",
+      "fixed_code": "def fibonacci(n):\n    a, b = 0, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a\n",
+      "bug_hint": "starts the sequence at 1,1 instead of 0,1"
+    },
+    {
+      "id": "qa_eval_03_binary_search",
+      "spec": "bsearch(arr: list[int], target: int) -> int returns the index of target in the sorted ascending list arr, or -1 if not found.",
+      "function_name": "bsearch",
+      "module_name": "target",
+      "buggy_code": "def bsearch(arr, target):\n    lo, hi = 0, len(arr) - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n            return mid\n        if arr[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n",
+      "fixed_code": "def bsearch(arr, target):\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n            return mid\n        if arr[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n",
+      "bug_hint": "uses `<` instead of `<=`; misses single-element matches at the boundary"
+    },
+    {
+      "id": "qa_eval_04_flatten",
+      "spec": "flatten(lst: list) -> list takes an arbitrarily nested list of values and returns a single flat list, preserving order. Non-list elements are kept; lists are recursively unpacked.",
+      "function_name": "flatten",
+      "module_name": "target",
+      "buggy_code": "def flatten(lst):\n    out = []\n    for x in lst:\n        if isinstance(x, list):\n            out.extend(x)\n        else:\n            out.append(x)\n    return out\n",
+      "fixed_code": "def flatten(lst):\n    out = []\n    for x in lst:\n        if isinstance(x, list):\n            out.extend(flatten(x))\n        else:\n            out.append(x)\n    return out\n",
+      "bug_hint": "only flattens one level deep"
+    },
+    {
+      "id": "qa_eval_05_unique_preserve_order",
+      "spec": "unique(seq: list) -> list returns the input list with duplicates removed, preserving the order of first occurrence.",
+      "function_name": "unique",
+      "module_name": "target",
+      "buggy_code": "def unique(seq):\n    return list(set(seq))\n",
+      "fixed_code": "def unique(seq):\n    seen = set()\n    out = []\n    for x in seq:\n        if x not in seen:\n            seen.add(x)\n            out.append(x)\n    return out\n",
+      "bug_hint": "set() destroys insertion order"
+    },
+    {
+      "id": "qa_eval_06_balanced_parens",
+      "spec": "is_balanced(s: str) -> bool returns True iff the brackets in s — only '(', ')', '[', ']', '{', '}' — are balanced AND properly nested. Other characters are ignored.",
+      "function_name": "is_balanced",
+      "module_name": "target",
+      "buggy_code": "def is_balanced(s):\n    pairs = {'(': ')', '[': ']', '{': '}'}\n    open_count = sum(1 for c in s if c in pairs)\n    close_count = sum(1 for c in s if c in pairs.values())\n    return open_count == close_count\n",
+      "fixed_code": "def is_balanced(s):\n    pairs = {')': '(', ']': '[', '}': '{'}\n    stack = []\n    for c in s:\n        if c in '([{':\n            stack.append(c)\n        elif c in pairs:\n            if not stack or stack[-1] != pairs[c]:\n                return False\n            stack.pop()\n    return not stack\n",
+      "bug_hint": "compares counts only; e.g. '([)]' passes but is improperly nested"
+    },
+    {
+      "id": "qa_eval_07_caesar_shift",
+      "spec": "caesar_shift(s: str, k: int) -> str shifts each lowercase a-z letter by k positions (mod 26) wrapping z->a; non-lowercase characters pass through unchanged.",
+      "function_name": "caesar_shift",
+      "module_name": "target",
+      "buggy_code": "def caesar_shift(s, k):\n    out = []\n    for c in s:\n        if 'a' <= c <= 'z':\n            out.append(chr(ord(c) + k))\n        else:\n            out.append(c)\n    return ''.join(out)\n",
+      "fixed_code": "def caesar_shift(s, k):\n    out = []\n    for c in s:\n        if 'a' <= c <= 'z':\n            out.append(chr((ord(c) - ord('a') + k) % 26 + ord('a')))\n        else:\n            out.append(c)\n    return ''.join(out)\n",
+      "bug_hint": "no modulo; 'z' shifted by 1 becomes '{' instead of 'a'"
+    },
+    {
+      "id": "qa_eval_08_roman_to_int",
+      "spec": "roman_to_int(s: str) -> int converts a Roman numeral (uppercase I,V,X,L,C,D,M) to an integer, handling the standard subtractive cases (IV=4, IX=9, XL=40, XC=90, CD=400, CM=900).",
+      "function_name": "roman_to_int",
+      "module_name": "target",
+      "buggy_code": "def roman_to_int(s):\n    values = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}\n    return sum(values[c] for c in s)\n",
+      "fixed_code": "def roman_to_int(s):\n    values = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}\n    total = 0\n    prev = 0\n    for c in reversed(s):\n        v = values[c]\n        if v < prev:\n            total -= v\n        else:\n            total += v\n        prev = v\n    return total\n",
+      "bug_hint": "ignores subtractive notation; 'IV' returns 6 instead of 4"
+    },
+    {
+      "id": "qa_eval_09_anagram",
+      "spec": "is_anagram(a: str, b: str) -> bool returns True iff a and b are anagrams when compared case-insensitively and ignoring whitespace.",
+      "function_name": "is_anagram",
+      "module_name": "target",
+      "buggy_code": "def is_anagram(a, b):\n    return sorted(a) == sorted(b)\n",
+      "fixed_code": "def is_anagram(a, b):\n    norm = lambda s: sorted(c.lower() for c in s if not c.isspace())\n    return norm(a) == norm(b)\n",
+      "bug_hint": "case-sensitive AND whitespace-sensitive"
+    },
+    {
+      "id": "qa_eval_10_count_words",
+      "spec": "count_words(s: str) -> int returns the number of whitespace-separated tokens in s. Empty or whitespace-only strings return 0.",
+      "function_name": "count_words",
+      "module_name": "target",
+      "buggy_code": "def count_words(s):\n    return len(s.split(' '))\n",
+      "fixed_code": "def count_words(s):\n    return len(s.split())\n",
+      "bug_hint": "split(' ') treats consecutive spaces as empty tokens; '' returns 1"
+    },
+    {
+      "id": "qa_eval_11_has_duplicates",
+      "spec": "has_duplicates(lst: list) -> bool returns True iff any value appears more than once in lst.",
+      "function_name": "has_duplicates",
+      "module_name": "target",
+      "buggy_code": "def has_duplicates(lst):\n    return any(lst[i] == lst[i + 1] for i in range(len(lst) - 1))\n",
+      "fixed_code": "def has_duplicates(lst):\n    return len(lst) != len(set(lst))\n",
+      "bug_hint": "only checks adjacent positions; misses non-adjacent duplicates"
+    },
+    {
+      "id": "qa_eval_12_flatten_dict",
+      "spec": "flatten_dict(d: dict, sep: str = '.') -> dict turns nested dicts into a single flat dict whose keys are joined parent paths separated by sep. Non-dict values stay as-is.",
+      "function_name": "flatten_dict",
+      "module_name": "target",
+      "buggy_code": "def flatten_dict(d, sep='.'):\n    out = {}\n    for k, v in d.items():\n        if isinstance(v, dict):\n            for k2, v2 in v.items():\n                out[f'{k}{sep}{k2}'] = v2\n        else:\n            out[k] = v\n    return out\n",
+      "fixed_code": "def flatten_dict(d, sep='.'):\n    out = {}\n    def _walk(prefix, value):\n        if isinstance(value, dict):\n            for k, v in value.items():\n                key = f'{prefix}{sep}{k}' if prefix else k\n                _walk(key, v)\n        else:\n            out[prefix] = value\n    _walk('', d)\n    return out\n",
+      "bug_hint": "only flattens one level; deeper nesting keeps a dict value"
+    },
+    {
+      "id": "qa_eval_13_parse_int_safe",
+      "spec": "parse_int_safe(s: str, default: int = 0) -> int parses s as an integer; on any failure (empty, non-digit, None) returns default.",
+      "function_name": "parse_int_safe",
+      "module_name": "target",
+      "buggy_code": "def parse_int_safe(s, default=0):\n    return int(s)\n",
+      "fixed_code": "def parse_int_safe(s, default=0):\n    try:\n        return int(s)\n    except (TypeError, ValueError):\n        return default\n",
+      "bug_hint": "no fallback; raises on bad input instead of returning default"
+    },
+    {
+      "id": "qa_eval_14_range_size",
+      "spec": "range_size(lst: list[float]) -> float returns max(lst) - min(lst). For an empty list returns 0.0.",
+      "function_name": "range_size",
+      "module_name": "target",
+      "buggy_code": "def range_size(lst):\n    return max(lst) - min(lst)\n",
+      "fixed_code": "def range_size(lst):\n    if not lst:\n        return 0.0\n    return max(lst) - min(lst)\n",
+      "bug_hint": "crashes on empty list instead of returning 0.0"
+    },
+    {
+      "id": "qa_eval_15_clamp",
+      "spec": "clamp(x: float, lo: float, hi: float) -> float returns lo if x<lo, hi if x>hi, else x. Assume lo<=hi.",
+      "function_name": "clamp",
+      "module_name": "target",
+      "buggy_code": "def clamp(x, lo, hi):\n    if x < lo:\n        return hi\n    if x > hi:\n        return lo\n    return x\n",
+      "fixed_code": "def clamp(x, lo, hi):\n    if x < lo:\n        return lo\n    if x > hi:\n        return hi\n    return x\n",
+      "bug_hint": "lo and hi swapped on out-of-range"
+    },
+    {
+      "id": "qa_eval_16_factorial",
+      "spec": "factorial(n: int) -> int returns n! for n>=0. factorial(0) == 1.",
+      "function_name": "factorial",
+      "module_name": "target",
+      "buggy_code": "def factorial(n):\n    result = 1\n    for i in range(1, n):\n        result *= i\n    return result\n",
+      "fixed_code": "def factorial(n):\n    result = 1\n    for i in range(1, n + 1):\n        result *= i\n    return result\n",
+      "bug_hint": "off-by-one: range(1, n) excludes n itself"
+    },
+    {
+      "id": "qa_eval_17_gcd",
+      "spec": "gcd(a: int, b: int) -> int returns the greatest common divisor of a and b (assume a>=0, b>=0, not both zero).",
+      "function_name": "gcd",
+      "module_name": "target",
+      "buggy_code": "def gcd(a, b):\n    while b:\n        a = b\n        b = a % b\n    return a\n",
+      "fixed_code": "def gcd(a, b):\n    while b:\n        a, b = b, a % b\n    return a\n",
+      "bug_hint": "non-simultaneous assignment clobbers a before computing a % b"
+    },
+    {
+      "id": "qa_eval_18_reverse_string",
+      "spec": "reverse(s: str) -> str returns s reversed character-by-character.",
+      "function_name": "reverse",
+      "module_name": "target",
+      "buggy_code": "def reverse(s):\n    return s[::1]\n",
+      "fixed_code": "def reverse(s):\n    return s[::-1]\n",
+      "bug_hint": "step is +1 instead of -1; returns input unchanged"
+    },
+    {
+      "id": "qa_eval_19_max_subarray_sum",
+      "spec": "max_subarray_sum(nums: list[int]) -> int returns the maximum sum of any contiguous non-empty subarray. For input [-2,1,-3,4,-1,2,1,-5,4] returns 6.",
+      "function_name": "max_subarray_sum",
+      "module_name": "target",
+      "buggy_code": "def max_subarray_sum(nums):\n    best = 0\n    cur = 0\n    for x in nums:\n        cur = max(x, cur + x)\n        best = max(best, cur)\n    return best\n",
+      "fixed_code": "def max_subarray_sum(nums):\n    best = nums[0]\n    cur = nums[0]\n    for x in nums[1:]:\n        cur = max(x, cur + x)\n        best = max(best, cur)\n    return best\n",
+      "bug_hint": "starts best=0 so all-negative arrays return 0 instead of the largest (least-negative) element"
+    },
+    {
+      "id": "qa_eval_20_count_substring",
+      "spec": "count_sub(s: str, sub: str) -> int returns the number of non-overlapping occurrences of sub in s. count_sub('aaaa','aa') == 2.",
+      "function_name": "count_sub",
+      "module_name": "target",
+      "buggy_code": "def count_sub(s, sub):\n    count = 0\n    for i in range(len(s)):\n        if s[i:i + len(sub)] == sub:\n            count += 1\n    return count\n",
+      "fixed_code": "def count_sub(s, sub):\n    if not sub:\n        return 0\n    count = 0\n    i = 0\n    while i <= len(s) - len(sub):\n        if s[i:i + len(sub)] == sub:\n            count += 1\n            i += len(sub)\n        else:\n            i += 1\n    return count\n",
+      "bug_hint": "counts overlapping occurrences; 'aaaa' with 'aa' returns 3 instead of 2"
+    },
+    {
+      "id": "qa_eval_21_remove_duplicates_sorted",
+      "spec": "dedupe_sorted(arr: list[int]) -> list[int] takes a sorted ascending list and returns the same elements with consecutive duplicates removed, order preserved.",
+      "function_name": "dedupe_sorted",
+      "module_name": "target",
+      "buggy_code": "def dedupe_sorted(arr):\n    out = []\n    for i in range(len(arr) - 1):\n        if arr[i] != arr[i + 1]:\n            out.append(arr[i])\n    return out\n",
+      "fixed_code": "def dedupe_sorted(arr):\n    if not arr:\n        return []\n    out = [arr[0]]\n    for i in range(1, len(arr)):\n        if arr[i] != arr[i - 1]:\n            out.append(arr[i])\n    return out\n",
+      "bug_hint": "drops the last element entirely"
+    },
+    {
+      "id": "qa_eval_22_safe_divide",
+      "spec": "safe_divide(a: float, b: float) -> float returns a/b. If b is zero, returns float('inf') if a>0, float('-inf') if a<0, and 0.0 if a==0.",
+      "function_name": "safe_divide",
+      "module_name": "target",
+      "buggy_code": "def safe_divide(a, b):\n    if b == 0:\n        return float('inf') if a > 0 else float('-inf')\n    return a / b\n",
+      "fixed_code": "def safe_divide(a, b):\n    if b == 0:\n        if a > 0:\n            return float('inf')\n        if a < 0:\n            return float('-inf')\n        return 0.0\n    return a / b\n",
+      "bug_hint": "0/0 returns -inf instead of 0.0"
+    },
+    {
+      "id": "qa_eval_23_title_case",
+      "spec": "title_case(s: str) -> str returns s with the first character of each whitespace-separated word capitalized and the rest lowercased. 'hELLO wORLD' -> 'Hello World'.",
+      "function_name": "title_case",
+      "module_name": "target",
+      "buggy_code": "def title_case(s):\n    return ' '.join(w.capitalize() for w in s.split(' '))\n",
+      "fixed_code": "def title_case(s):\n    return ' '.join(w.capitalize() for w in s.split())\n",
+      "bug_hint": "split(' ') preserves runs of spaces as empty tokens"
+    },
+    {
+      "id": "qa_eval_24_pairs_summing_to_k",
+      "spec": "pair_count(nums: list[int], k: int) -> int returns the number of unique unordered pairs (i, j) with i<j such that nums[i] + nums[j] == k.",
+      "function_name": "pair_count",
+      "module_name": "target",
+      "buggy_code": "def pair_count(nums, k):\n    count = 0\n    for i in range(len(nums)):\n        for j in range(len(nums)):\n            if i != j and nums[i] + nums[j] == k:\n                count += 1\n    return count\n",
+      "fixed_code": "def pair_count(nums, k):\n    count = 0\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] + nums[j] == k:\n                count += 1\n    return count\n",
+      "bug_hint": "counts each unordered pair twice"
+    },
+    {
+      "id": "qa_eval_25_running_average",
+      "spec": "running_avg(nums: list[float]) -> list[float] returns a list whose ith element is the mean of nums[0..i] inclusive.",
+      "function_name": "running_avg",
+      "module_name": "target",
+      "buggy_code": "def running_avg(nums):\n    out = []\n    total = 0\n    for i, x in enumerate(nums):\n        total += x\n        out.append(total / (i))\n    return out\n",
+      "fixed_code": "def running_avg(nums):\n    out = []\n    total = 0\n    for i, x in enumerate(nums):\n        total += x\n        out.append(total / (i + 1))\n    return out\n",
+      "bug_hint": "divides by i instead of i+1; first element triggers ZeroDivisionError"
+    },
+    {
+      "id": "qa_eval_26_string_to_int_list",
+      "spec": "to_int_list(s: str) -> list[int] takes a comma-separated string of integers (with optional whitespace) and returns the list of ints. Empty string returns [].",
+      "function_name": "to_int_list",
+      "module_name": "target",
+      "buggy_code": "def to_int_list(s):\n    return [int(x) for x in s.split(',')]\n",
+      "fixed_code": "def to_int_list(s):\n    if not s.strip():\n        return []\n    return [int(x.strip()) for x in s.split(',')]\n",
+      "bug_hint": "empty string -> [int('')] which raises ValueError; whitespace around numbers also fails"
+    },
+    {
+      "id": "qa_eval_27_chunk_list",
+      "spec": "chunk(lst: list, n: int) -> list[list] splits lst into consecutive chunks of size n. The last chunk may be shorter if len(lst) is not a multiple of n. n>0.",
+      "function_name": "chunk",
+      "module_name": "target",
+      "buggy_code": "def chunk(lst, n):\n    return [lst[i:i + n] for i in range(0, len(lst), n + 1)]\n",
+      "fixed_code": "def chunk(lst, n):\n    return [lst[i:i + n] for i in range(0, len(lst), n)]\n",
+      "bug_hint": "step is n+1 instead of n; loses one element between chunks"
+    },
+    {
+      "id": "qa_eval_28_normalize_whitespace",
+      "spec": "normalize(s: str) -> str collapses runs of whitespace (spaces, tabs, newlines) into single spaces and strips leading/trailing whitespace.",
+      "function_name": "normalize",
+      "module_name": "target",
+      "buggy_code": "def normalize(s):\n    return s.replace('  ', ' ').strip()\n",
+      "fixed_code": "def normalize(s):\n    return ' '.join(s.split())\n",
+      "bug_hint": "only collapses double-spaces in one pass; '   ' becomes ' ', tabs/newlines unchanged"
+    },
+    {
+      "id": "qa_eval_29_dot_product",
+      "spec": "dot(a: list[float], b: list[float]) -> float returns the sum of element-wise products of two equal-length lists. Empty inputs return 0.0.",
+      "function_name": "dot",
+      "module_name": "target",
+      "buggy_code": "def dot(a, b):\n    return sum(a[i] * b[i] for i in range(len(a)))\n",
+      "fixed_code": "def dot(a, b):\n    if len(a) != len(b):\n        raise ValueError('length mismatch')\n    return sum(a[i] * b[i] for i in range(len(a)))\n",
+      "bug_hint": "silently produces wrong answer when len(a) > len(b) (IndexError) or len(a) < len(b) (ignores trailing b)"
+    },
+    {
+      "id": "qa_eval_30_count_set_bits",
+      "spec": "popcount(n: int) -> int returns the number of 1 bits in the binary representation of n. n>=0.",
+      "function_name": "popcount",
+      "module_name": "target",
+      "buggy_code": "def popcount(n):\n    count = 0\n    while n > 0:\n        if n // 2 == n:\n            count += 1\n        n //= 2\n    return count\n",
+      "fixed_code": "def popcount(n):\n    count = 0\n    while n:\n        count += n & 1\n        n >>= 1\n    return count\n",
+      "bug_hint": "uses `n // 2 == n` which is only true for n==0; effectively counts zero set bits for any positive input"
+    },
+    {
+      "id": "qa_eval_31_camel_to_snake",
+      "spec": "camel_to_snake(s: str) -> str converts CamelCase to snake_case. 'CamelCase' -> 'camel_case'. 'IOStream' -> 'io_stream'. 'simple' -> 'simple'.",
+      "function_name": "camel_to_snake",
+      "module_name": "target",
+      "buggy_code": "def camel_to_snake(s):\n    out = []\n    for c in s:\n        if c.isupper():\n            out.append('_')\n            out.append(c.lower())\n        else:\n            out.append(c)\n    return ''.join(out).lstrip('_')\n",
+      "fixed_code": "import re\n\ndef camel_to_snake(s):\n    s = re.sub(r'(.)([A-Z][a-z]+)', r'\\1_\\2', s)\n    s = re.sub(r'([a-z0-9])([A-Z])', r'\\1_\\2', s)\n    return s.lower()\n",
+      "bug_hint": "'IOStream' becomes 'i_o_stream' instead of 'io_stream' (every uppercase gets a separator)"
+    },
+    {
+      "id": "qa_eval_32_intersect_sorted",
+      "spec": "intersect(a: list[int], b: list[int]) -> list[int] returns a sorted ascending list of integers present in BOTH inputs. Each value appears at most once even if duplicated in the inputs.",
+      "function_name": "intersect",
+      "module_name": "target",
+      "buggy_code": "def intersect(a, b):\n    return sorted([x for x in a if x in b])\n",
+      "fixed_code": "def intersect(a, b):\n    return sorted(set(a) & set(b))\n",
+      "bug_hint": "preserves duplicates from a; intersect([1,1,2],[1,2,2]) returns [1,1,2] instead of [1,2]"
+    },
+    {
+      "id": "qa_eval_33_shift_array",
+      "spec": "shift_left(arr: list, k: int) -> list returns arr rotated left by k positions. k can be larger than len(arr); k can be negative (right rotation).",
+      "function_name": "shift_left",
+      "module_name": "target",
+      "buggy_code": "def shift_left(arr, k):\n    return arr[k:] + arr[:k]\n",
+      "fixed_code": "def shift_left(arr, k):\n    if not arr:\n        return []\n    k = k % len(arr)\n    return arr[k:] + arr[:k]\n",
+      "bug_hint": "k > len(arr) drops elements; k < 0 produces wrong rotation; empty list crashes on modulo"
+    },
+    {
+      "id": "qa_eval_34_pythag_triple",
+      "spec": "is_pythag(a: int, b: int, c: int) -> bool returns True iff (a, b, c) form a Pythagorean triple in any order, i.e., the sum of squares of the two smallest equals the square of the largest, and all three are positive.",
+      "function_name": "is_pythag",
+      "module_name": "target",
+      "buggy_code": "def is_pythag(a, b, c):\n    return a * a + b * b == c * c\n",
+      "fixed_code": "def is_pythag(a, b, c):\n    if a <= 0 or b <= 0 or c <= 0:\n        return False\n    s = sorted([a, b, c])\n    return s[0] * s[0] + s[1] * s[1] == s[2] * s[2]\n",
+      "bug_hint": "assumes c is the hypotenuse; (5,4,3) returns False even though it's a valid triple"
+    },
+    {
+      "id": "qa_eval_35_word_freq",
+      "spec": "word_freq(s: str) -> dict[str,int] returns a dict mapping lowercased whitespace-separated words to their occurrence counts. Empty string returns {}.",
+      "function_name": "word_freq",
+      "module_name": "target",
+      "buggy_code": "def word_freq(s):\n    out = {}\n    for w in s.split(' '):\n        out[w] = out.get(w, 0) + 1\n    return out\n",
+      "fixed_code": "def word_freq(s):\n    out = {}\n    for w in s.split():\n        out[w.lower()] = out.get(w.lower(), 0) + 1\n    return out\n",
+      "bug_hint": "case-sensitive and uses split(' ') so multiple spaces produce empty-string keys"
+    },
+    {
+      "id": "qa_eval_36_zip_unequal",
+      "spec": "zip_short(a: list, b: list) -> list[tuple] returns a list of pairs (a[i], b[i]) up to the length of the shorter list. zip_short([1,2],[3,4,5]) == [(1,3),(2,4)].",
+      "function_name": "zip_short",
+      "module_name": "target",
+      "buggy_code": "def zip_short(a, b):\n    n = max(len(a), len(b))\n    return [(a[i], b[i]) for i in range(n)]\n",
+      "fixed_code": "def zip_short(a, b):\n    n = min(len(a), len(b))\n    return [(a[i], b[i]) for i in range(n)]\n",
+      "bug_hint": "uses max; raises IndexError when lengths differ"
+    },
+    {
+      "id": "qa_eval_37_sum_digits",
+      "spec": "sum_digits(n: int) -> int returns the sum of the decimal digits of |n|. sum_digits(0) == 0; sum_digits(-123) == 6.",
+      "function_name": "sum_digits",
+      "module_name": "target",
+      "buggy_code": "def sum_digits(n):\n    return sum(int(c) for c in str(n))\n",
+      "fixed_code": "def sum_digits(n):\n    return sum(int(c) for c in str(abs(n)))\n",
+      "bug_hint": "negative input: str(-123) starts with '-' and int('-') raises ValueError"
+    },
+    {
+      "id": "qa_eval_38_is_palindrome",
+      "spec": "is_palindrome(s: str) -> bool returns True iff s reads the same forwards and backwards, comparing case-insensitively and ignoring non-alphanumeric characters. is_palindrome('A man, a plan, a canal: Panama') == True.",
+      "function_name": "is_palindrome",
+      "module_name": "target",
+      "buggy_code": "def is_palindrome(s):\n    return s == s[::-1]\n",
+      "fixed_code": "def is_palindrome(s):\n    cleaned = ''.join(c.lower() for c in s if c.isalnum())\n    return cleaned == cleaned[::-1]\n",
+      "bug_hint": "case-sensitive and includes punctuation/whitespace"
+    },
+    {
+      "id": "qa_eval_39_merge_sorted",
+      "spec": "merge_sorted(a: list[int], b: list[int]) -> list[int] takes two ascending-sorted lists and returns a single ascending-sorted list of all elements (duplicates preserved).",
+      "function_name": "merge_sorted",
+      "module_name": "target",
+      "buggy_code": "def merge_sorted(a, b):\n    i = j = 0\n    out = []\n    while i < len(a) and j < len(b):\n        if a[i] < b[j]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    return out\n",
+      "fixed_code": "def merge_sorted(a, b):\n    i = j = 0\n    out = []\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    out.extend(a[i:])\n    out.extend(b[j:])\n    return out\n",
+      "bug_hint": "drops the tail of whichever list is longer (the loop ends before both are exhausted)"
+    },
+    {
+      "id": "qa_eval_40_remove_at",
+      "spec": "remove_at(lst: list, idx: int) -> list returns a NEW list with element at idx removed. Negative idx counts from the end (Python-style). Out-of-range idx returns lst unchanged.",
+      "function_name": "remove_at",
+      "module_name": "target",
+      "buggy_code": "def remove_at(lst, idx):\n    out = lst.copy()\n    del out[idx]\n    return out\n",
+      "fixed_code": "def remove_at(lst, idx):\n    n = len(lst)\n    if idx < -n or idx >= n:\n        return list(lst)\n    out = list(lst)\n    del out[idx]\n    return out\n",
+      "bug_hint": "out-of-range idx raises IndexError instead of returning the input unchanged"
+    },
+    {
+      "id": "qa_eval_41_compress_runs",
+      "spec": "compress(s: str) -> str collapses consecutive identical characters into a single character. 'aaabbc' -> 'abc'. Empty string returns ''.",
+      "function_name": "compress",
+      "module_name": "target",
+      "buggy_code": "def compress(s):\n    out = []\n    for i, c in enumerate(s):\n        if i == 0 or c != s[i + 1]:\n            out.append(c)\n    return ''.join(out)\n",
+      "fixed_code": "def compress(s):\n    if not s:\n        return ''\n    out = [s[0]]\n    for c in s[1:]:\n        if c != out[-1]:\n            out.append(c)\n    return ''.join(out)\n",
+      "bug_hint": "compares to s[i + 1] (next) instead of s[i - 1] (previous); also crashes on the last character (IndexError)"
+    },
+    {
+      "id": "qa_eval_42_unique_chars",
+      "spec": "all_unique(s: str) -> bool returns True iff every character in s appears exactly once (case-sensitive).",
+      "function_name": "all_unique",
+      "module_name": "target",
+      "buggy_code": "def all_unique(s):\n    return len(s) == len(set(s.lower()))\n",
+      "fixed_code": "def all_unique(s):\n    return len(s) == len(set(s))\n",
+      "bug_hint": "lowercases before comparing; 'Aa' returns False even though A and a are distinct characters under the case-sensitive spec"
+    },
+    {
+      "id": "qa_eval_43_clip_string",
+      "spec": "clip(s: str, n: int) -> str returns s truncated to at most n characters. If truncation occurs, append '...' (the full result is still capped at n characters total).",
+      "function_name": "clip",
+      "module_name": "target",
+      "buggy_code": "def clip(s, n):\n    if len(s) <= n:\n        return s\n    return s[:n] + '...'\n",
+      "fixed_code": "def clip(s, n):\n    if len(s) <= n:\n        return s\n    if n <= 3:\n        return '.' * n\n    return s[:n - 3] + '...'\n",
+      "bug_hint": "appends '...' AFTER taking n chars, so truncated result has length n+3 instead of n"
+    },
+    {
+      "id": "qa_eval_44_round_half_up",
+      "spec": "round_half_up(x: float) -> int rounds x to the nearest integer with half-values rounding away from zero. round_half_up(0.5)==1, round_half_up(-0.5)==-1, round_half_up(2.5)==3.",
+      "function_name": "round_half_up",
+      "module_name": "target",
+      "buggy_code": "def round_half_up(x):\n    return round(x)\n",
+      "fixed_code": "import math\n\ndef round_half_up(x):\n    if x >= 0:\n        return math.floor(x + 0.5)\n    return -math.floor(-x + 0.5)\n",
+      "bug_hint": "Python's round() uses banker's rounding: round(0.5)==0, round(2.5)==2"
+    },
+    {
+      "id": "qa_eval_45_tally_votes",
+      "spec": "winner(votes: list[str]) -> str returns the string that appears most often in votes. Ties are broken by the alphabetically smallest. Empty list returns ''.",
+      "function_name": "winner",
+      "module_name": "target",
+      "buggy_code": "def winner(votes):\n    counts = {}\n    for v in votes:\n        counts[v] = counts.get(v, 0) + 1\n    return max(counts, key=counts.get)\n",
+      "fixed_code": "def winner(votes):\n    if not votes:\n        return ''\n    counts = {}\n    for v in votes:\n        counts[v] = counts.get(v, 0) + 1\n    best = max(counts.values())\n    return min(k for k, c in counts.items() if c == best)\n",
+      "bug_hint": "doesn't handle ties (returns whichever was inserted first via dict iteration order) and crashes on empty input"
+    },
+    {
+      "id": "qa_eval_46_min_distance_pair",
+      "spec": "closest_pair(nums: list[float]) -> tuple[float, float] returns the two elements of nums with the smallest absolute difference, as a tuple (a, b) with a<=b. len(nums) >= 2.",
+      "function_name": "closest_pair",
+      "module_name": "target",
+      "buggy_code": "def closest_pair(nums):\n    best = (nums[0], nums[1])\n    best_d = abs(nums[0] - nums[1])\n    for i in range(len(nums)):\n        for j in range(i, len(nums)):\n            d = abs(nums[i] - nums[j])\n            if d < best_d:\n                best = (nums[i], nums[j])\n                best_d = d\n    return best\n",
+      "fixed_code": "def closest_pair(nums):\n    best = None\n    best_d = float('inf')\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            d = abs(nums[i] - nums[j])\n            if d < best_d:\n                a, b = nums[i], nums[j]\n                best = (a, b) if a <= b else (b, a)\n                best_d = d\n    return best\n",
+      "bug_hint": "inner loop starts at i (allows i==j), so distance 0 always 'wins' against the same element — also doesn't sort the returned pair"
+    },
+    {
+      "id": "qa_eval_47_reverse_words",
+      "spec": "reverse_words(s: str) -> str returns s with the order of whitespace-separated words reversed; multiple spaces collapse to single. 'the  quick  fox' -> 'fox quick the'.",
+      "function_name": "reverse_words",
+      "module_name": "target",
+      "buggy_code": "def reverse_words(s):\n    return ' '.join(reversed(s.split(' ')))\n",
+      "fixed_code": "def reverse_words(s):\n    return ' '.join(reversed(s.split()))\n",
+      "bug_hint": "split(' ') retains empty tokens from runs of spaces; result has odd internal spacing"
+    },
+    {
+      "id": "qa_eval_48_safe_get",
+      "spec": "safe_get(d: dict, *keys, default=None) -> any walks a chain of keys into nested dicts. Returns default on the first missing key or non-dict intermediate.",
+      "function_name": "safe_get",
+      "module_name": "target",
+      "buggy_code": "def safe_get(d, *keys, default=None):\n    for k in keys:\n        d = d[k]\n    return d\n",
+      "fixed_code": "def safe_get(d, *keys, default=None):\n    cur = d\n    for k in keys:\n        if not isinstance(cur, dict) or k not in cur:\n            return default\n        cur = cur[k]\n    return cur\n",
+      "bug_hint": "raises KeyError or TypeError on missing/non-dict keys instead of returning default"
+    },
+    {
+      "id": "qa_eval_49_normalize_grade",
+      "spec": "to_grade(score: int) -> str returns 'A' for 90<=score<=100, 'B' for 80-89, 'C' for 70-79, 'D' for 60-69, 'F' for 0-59. Out-of-range raises ValueError.",
+      "function_name": "to_grade",
+      "module_name": "target",
+      "buggy_code": "def to_grade(score):\n    if score >= 90:\n        return 'A'\n    if score >= 80:\n        return 'B'\n    if score >= 70:\n        return 'C'\n    if score >= 60:\n        return 'D'\n    return 'F'\n",
+      "fixed_code": "def to_grade(score):\n    if not 0 <= score <= 100:\n        raise ValueError('out of range')\n    if score >= 90:\n        return 'A'\n    if score >= 80:\n        return 'B'\n    if score >= 70:\n        return 'C'\n    if score >= 60:\n        return 'D'\n    return 'F'\n",
+      "bug_hint": "no range check; -50 returns 'F' and 150 returns 'A'"
+    },
+    {
+      "id": "qa_eval_50_matrix_transpose",
+      "spec": "transpose(mat: list[list]) -> list[list] returns the transpose of a non-empty rectangular matrix. transpose([[1,2,3],[4,5,6]]) == [[1,4],[2,5],[3,6]].",
+      "function_name": "transpose",
+      "module_name": "target",
+      "buggy_code": "def transpose(mat):\n    rows = len(mat)\n    cols = len(mat[0])\n    return [[mat[r][c] for r in range(cols)] for c in range(rows)]\n",
+      "fixed_code": "def transpose(mat):\n    return [list(row) for row in zip(*mat)]\n",
+      "bug_hint": "swapped the iteration variables in the comprehension; produces wrong shape when rows != cols"
+    }
+  ]
+}

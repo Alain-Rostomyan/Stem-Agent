@@ -1,0 +1,571 @@
+{
+  "domain": "research",
+  "split": "eval",
+  "task_kind": "synthesis_qa",
+  "description": "Held-out research synthesis tasks (v2 = v1 + 35 hand-curated additions for tighter CIs). Same shapes as v1 (agg / filter / granular). Never appears in probe_set.json.",
+  "shapes": {
+    "agg": "Numeric aggregation (count/sum/ratio) over per-item lookups.",
+    "filter": "Filter axis differs from list axis: canonical list, non-canonical filter.",
+    "granular": "At least one ingredient too granular/recent/obscure for parametric memory."
+  },
+  "tasks": [
+    {
+      "id": "rs_eval_01_nato_joined_post_2000",
+      "shape": "agg",
+      "question": "Of the current 32 NATO member countries (as of June 2024), how many joined NATO in the year 2000 or later?",
+      "answer": "13",
+      "aliases": [
+        "13",
+        "thirteen"
+      ],
+      "notes": "1999 wave (CZ, HU, PL) excluded. 2004: BG, EE, LV, LT, RO, SK, SI (7). 2009: AL, HR (2). 2017: ME (1). 2020: MK (1). 2023: FI (1). 2024: SE (1). Total 13."
+    },
+    {
+      "id": "rs_eval_02_un_languages_non_latin",
+      "shape": "agg",
+      "question": "Of the 6 official languages of the United Nations, how many use a script other than the Latin alphabet?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three"
+      ],
+      "notes": "UN official languages: Arabic, Chinese, English, French, Russian, Spanish. Non-Latin: Arabic (Arabic script), Chinese (Han), Russian (Cyrillic). Latin: English, French, Spanish."
+    },
+    {
+      "id": "rs_eval_03_oceans_deep",
+      "shape": "agg",
+      "question": "Of the 5 oceans of Earth, how many have a maximum depth exceeding 7,000 meters?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Pacific (Mariana ~10,911m), Atlantic (Puerto Rico Trench ~8,376m), Indian (Sunda ~7,290m), Southern (South Sandwich ~7,236m). Arctic (~5,550m) is the only one below 7,000m."
+    },
+    {
+      "id": "rs_eval_04_new7wonders_western",
+      "shape": "agg",
+      "question": "Of the 7 New Wonders of the World (announced by the New 7 Wonders Foundation in 2007), how many are located in countries in the Western Hemisphere?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three"
+      ],
+      "notes": "Christ the Redeemer (Brazil), Machu Picchu (Peru), Chichen Itza (Mexico). The other 4 (Great Wall, Petra, Colosseum, Taj Mahal) are in the Eastern Hemisphere. Trivia-listicle risk; included as the 'easy' end of the agg shape."
+    },
+    {
+      "id": "rs_eval_05_nfl_never_won_sb",
+      "shape": "agg",
+      "question": "Of the 32 teams in the NFL (as of the 2023 regular season), how many have never won a Super Bowl?",
+      "answer": "12",
+      "aliases": [
+        "12",
+        "twelve"
+      ],
+      "notes": "Never-won as of end of 2023 season: Vikings, Bills, Browns, Bengals, Lions, Cardinals, Falcons, Chargers, Texans, Panthers, Titans, Jaguars."
+    },
+    {
+      "id": "rs_eval_06_populous_non_latin_script",
+      "shape": "filter",
+      "question": "Of the 10 most populous countries in the world (per 2024 UN estimates), how many have at least one official language whose primary script is something other than the Latin alphabet?",
+      "answer": "5",
+      "aliases": [
+        "5",
+        "five"
+      ],
+      "notes": "Top 10 (2024): India (Devanagari, Bengali), China (Han), USA (Latin), Indonesia (Latin), Pakistan (Urdu/Arabic-derived script), Nigeria (Latin), Brazil (Latin), Bangladesh (Bengali), Russia (Cyrillic), Mexico (Latin). Non-Latin: India, China, Pakistan, Bangladesh, Russia = 5. Filter axis (script) is independent of list axis (population)."
+    },
+    {
+      "id": "rs_eval_07_womens_wc_men_too",
+      "shape": "filter",
+      "question": "Of the 8 unique countries that have hosted the FIFA Women's World Cup from 1991 through 2023 inclusive (treating co-hosts as separate countries), how many have also hosted a FIFA Men's World Cup at any point?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Women's hosts (unique countries): China, Sweden, USA, Germany, Canada, France, Australia, New Zealand. Of these, men's hosts: Sweden (1958), USA (1994), Germany (1974/2006), France (1938/1998) = 4."
+    },
+    {
+      "id": "rs_eval_08_populous_muslim_majority",
+      "shape": "filter",
+      "question": "Of the 10 most populous countries in the world (per 2024 UN estimates), how many have a Muslim-majority population (more than 50% Muslim)?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three"
+      ],
+      "notes": "Indonesia, Pakistan, Bangladesh. Nigeria is roughly evenly split and most demographic surveys put Muslims slightly under 50% nationally; excluded. Filter axis (religion) independent of list axis (population)."
+    },
+    {
+      "id": "rs_eval_09_nato_founding_monarchies",
+      "shape": "filter",
+      "question": "Of the 12 founding members of NATO (signatories of the 1949 North Atlantic Treaty), how many had a hereditary monarch as their head of state at the time of founding?",
+      "answer": "7",
+      "aliases": [
+        "7",
+        "seven"
+      ],
+      "notes": "Founding 12: USA, UK, France, Belgium, Netherlands, Luxembourg, Italy, Norway, Denmark, Iceland, Portugal, Canada. Monarchies in 1949: UK (George VI), Belgium, Netherlands, Luxembourg, Norway, Denmark, plus Canada (Commonwealth realm with George VI as head of state) = 7. Iceland (republic 1944), Italy (republic 1946), France, Portugal, USA were republics."
+    },
+    {
+      "id": "rs_eval_10_sa_official_bantu",
+      "shape": "filter",
+      "question": "Of the 12 official languages of South Africa (as recognized after the 2023 constitutional amendment that added South African Sign Language), how many belong to the Bantu language family?",
+      "answer": "9",
+      "aliases": [
+        "9",
+        "nine"
+      ],
+      "notes": "Bantu: Ndebele, Northern Sotho (Sepedi), Sotho (Sesotho), Swati, Tsonga, Tswana, Venda, Xhosa, Zulu = 9. Non-Bantu: Afrikaans (IE-Germanic), English (IE-Germanic), South African Sign Language. Filter axis (language family) independent of list axis (official-language status)."
+    },
+    {
+      "id": "rs_eval_11_cl_winners_england",
+      "shape": "granular",
+      "question": "Of the 5 most recent UEFA Champions League winning clubs (covering the 2019-20 final through the 2023-24 final inclusive), how many are clubs based in England?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "2019-20 Bayern Munich (Germany), 2020-21 Chelsea (England), 2021-22 Real Madrid (Spain), 2022-23 Manchester City (England), 2023-24 Real Madrid (Spain). English: Chelsea, Man City = 2."
+    },
+    {
+      "id": "rs_eval_12_booker_outside_uk",
+      "shape": "granular",
+      "question": "Of the 5 most recent winners of the Booker Prize for Fiction (2020 through 2024 inclusive), how many were born outside the United Kingdom?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three"
+      ],
+      "notes": "2020 Douglas Stuart (Glasgow, UK), 2021 Damon Galgut (South Africa), 2022 Shehan Karunatilaka (Sri Lanka), 2023 Paul Lynch (Ireland), 2024 Samantha Harvey (UK). Outside UK: 3. The 2024 winner is post-cutoff for gpt-4o-mini."
+    },
+    {
+      "id": "rs_eval_13_eurovision_non_eu",
+      "shape": "granular",
+      "question": "Of the 5 most recent winners of the Eurovision Song Contest (covering 2019, 2021, 2022, 2023, and 2024 — the 2020 contest was canceled), how many represented a country that is not a member of the European Union?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "2019 Netherlands (EU), 2021 Italy (EU), 2022 Ukraine (not EU), 2023 Sweden (EU), 2024 Switzerland (not EU). Non-EU: Ukraine, Switzerland = 2. The 2024 winner (Nemo, Switzerland) is post-cutoff for gpt-4o-mini."
+    },
+    {
+      "id": "rs_eval_14_palme_dor_women",
+      "shape": "granular",
+      "question": "Of the 5 most recent Palme d'Or winners at the Cannes Film Festival (covering 2019, 2021, 2022, 2023, and 2024 — the 2020 festival was canceled), how many were directed by women?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "2019 Parasite (Bong Joon-ho, M), 2021 Titane (Julia Ducournau, F), 2022 Triangle of Sadness (Ruben Ostlund, M), 2023 Anatomy of a Fall (Justine Triet, F), 2024 Anora (Sean Baker, M). Women-directed: Ducournau, Triet = 2."
+    },
+    {
+      "id": "rs_eval_15_ballon_dor_spain",
+      "shape": "granular",
+      "question": "Of the men's Ballon d'Or winners from 2019 through 2024 inclusive (note: the 2020 award was not given), how many were playing for a club based in Spain at the time they received the award?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "2019 Messi (Barcelona, Spain), 2021 Messi (PSG, France), 2022 Benzema (Real Madrid, Spain), 2023 Messi (Inter Miami, USA), 2024 Rodri (Manchester City, England). Spain-based at time of award: 2019, 2022 = 2. The 2024 winner is post-cutoff for gpt-4o-mini."
+    },
+    {
+      "id": "rs_eval_16_solar_planets_rings",
+      "shape": "agg",
+      "question": "Of the 8 planets in the Solar System (per the IAU 2006 definition), how many have a planetary ring system?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Jupiter, Saturn, Uranus, and Neptune all have ring systems (Saturn's are most prominent; Jupiter's, Uranus's, and Neptune's are faint but well-documented)."
+    },
+    {
+      "id": "rs_eval_17_great_lakes_canada",
+      "shape": "agg",
+      "question": "Of the 5 Great Lakes of North America, how many have shoreline in Canada?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Lake Superior, Huron, Erie, and Ontario border Canada. Lake Michigan is entirely within the United States."
+    },
+    {
+      "id": "rs_eval_18_g7_pacific_coast",
+      "shape": "agg",
+      "question": "Of the 7 G7 member countries (Canada, France, Germany, Italy, Japan, the United Kingdom, and the United States), how many have a Pacific Ocean coastline?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three"
+      ],
+      "notes": "Canada, Japan, and the United States have Pacific coastlines. France, Germany, Italy, and the UK do not."
+    },
+    {
+      "id": "rs_eval_19_continents_population_threshold",
+      "shape": "agg",
+      "question": "Of the 7 continents, how many contain at least one country whose population exceeds 200 million as of 2024 estimates?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Asia (China ~1.41B, India ~1.45B, Indonesia ~280M, Pakistan ~245M), Africa (Nigeria ~230M), North America (USA ~340M), South America (Brazil ~217M). Europe's largest country by population (Russia ~143M, treating Russia as Europe) is below 200M. Oceania, Antarctica are far below. Threshold of 200M chosen specifically to make the Russia-as-Europe ambiguity moot."
+    },
+    {
+      "id": "rs_eval_20_brics_landlocked",
+      "shape": "agg",
+      "question": "Of the 5 original BRICS member countries (Brazil, Russia, India, China, South Africa), how many are landlocked?",
+      "answer": "0",
+      "aliases": [
+        "0",
+        "zero",
+        "none"
+      ],
+      "notes": "All five have ocean coastlines. Brazil (Atlantic), Russia (Arctic, Pacific, Atlantic via Baltic/Black), India (Indian), China (Pacific), South Africa (Atlantic, Indian). Trick question — agent that searches naively may invent a wrong answer."
+    },
+    {
+      "id": "rs_eval_21_eu_founders_french_official",
+      "shape": "agg",
+      "question": "Of the 6 founding members of the European Economic Community (signatories of the 1957 Treaty of Rome), how many have French as an official language at the national level today?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three"
+      ],
+      "notes": "EEC founders: Belgium, France, Italy, Luxembourg, Netherlands, West Germany. French is national-official in France, Belgium, and Luxembourg. Italian/German/Dutch are official in the others; Italy has minor French regional status (Aosta Valley) but not national."
+    },
+    {
+      "id": "rs_eval_22_un_security_permanent_nuclear",
+      "shape": "agg",
+      "question": "Of the 5 permanent members of the UN Security Council, how many are recognized nuclear-weapon states under the NPT?",
+      "answer": "5",
+      "aliases": [
+        "5",
+        "five",
+        "all"
+      ],
+      "notes": "All five P5 — China, France, Russia, the United Kingdom, and the United States — are recognized nuclear-weapon states under the Nuclear Non-Proliferation Treaty. This is by design (the NPT defines NWS as states that tested before 1 Jan 1967)."
+    },
+    {
+      "id": "rs_eval_23_seven_summits_southern",
+      "shape": "agg",
+      "question": "Of the 7 Summits (highest peaks of the seven continents — Bass list: Everest, Aconcagua, Denali, Kilimanjaro, Elbrus, Vinson, Kosciuszko), how many are in the Southern Hemisphere?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Aconcagua (S. America, ~32°S), Kilimanjaro (Africa, ~3°S), Vinson (Antarctica, ~78°S), Kosciuszko (Australia, ~36°S). Everest, Denali, and Elbrus are in the Northern Hemisphere."
+    },
+    {
+      "id": "rs_eval_24_dwarf_planets_rings",
+      "shape": "agg",
+      "question": "Of the 5 IAU-recognized dwarf planets (Ceres, Pluto, Haumea, Makemake, Eris), how many are known to have at least one moon?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Pluto (Charon + 4), Haumea (Hi'iaka, Namaka), Makemake (MK 2), Eris (Dysnomia). Ceres has no known moon. Snippet-skim may confuse 'has a ring' (Haumea has rings too) with 'has a moon'."
+    },
+    {
+      "id": "rs_eval_25_grand_slams_outside_europe",
+      "shape": "agg",
+      "question": "Of the 4 tennis Grand Slam tournaments (Australian Open, French Open, Wimbledon, US Open), how many are held outside Europe?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "Australian Open (Melbourne) and US Open (New York) are outside Europe. French Open (Paris) and Wimbledon (London) are in Europe."
+    },
+    {
+      "id": "rs_eval_26_baltic_states_eurozone",
+      "shape": "agg",
+      "question": "Of the 3 Baltic states (Estonia, Latvia, Lithuania), how many use the Euro as their official currency as of 2024?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three",
+        "all"
+      ],
+      "notes": "Estonia (2011), Latvia (2014), Lithuania (2015). All three are in the eurozone."
+    },
+    {
+      "id": "rs_eval_27_oceans_touch_antarctica",
+      "shape": "agg",
+      "question": "Of the 5 oceans of Earth (Pacific, Atlantic, Indian, Arctic, Southern), how many directly border Antarctica?",
+      "answer": "1",
+      "aliases": [
+        "1",
+        "one"
+      ],
+      "notes": "By the IHO 2000 definition, only the Southern Ocean borders Antarctica. Some older conventions extend Pacific/Atlantic/Indian to the coast, but under the standard 5-ocean model only the Southern Ocean does. Trick: agents using older definitions may answer 4."
+    },
+    {
+      "id": "rs_eval_28_g20_eu_members",
+      "shape": "filter",
+      "question": "Of the 19 country members of the G20 (i.e., excluding the EU itself and the African Union), how many are also EU member states as of June 2024?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three"
+      ],
+      "notes": "G20 country list: Argentina, Australia, Brazil, Canada, China, France, Germany, India, Indonesia, Italy, Japan, Mexico, Russia, Saudi Arabia, South Africa, South Korea, Turkey, UK, USA. Of those, EU members: France, Germany, Italy = 3. (UK left the EU in 2020.)"
+    },
+    {
+      "id": "rs_eval_29_panchen_lhasa_skip",
+      "shape": "filter",
+      "question": "Of the 6 official languages of the United Nations (Arabic, Chinese, English, French, Russian, Spanish), how many are written using a script that has dedicated Unicode blocks BUT is also still actively written right-to-left?",
+      "answer": "1",
+      "aliases": [
+        "1",
+        "one"
+      ],
+      "notes": "Only Arabic is right-to-left among the UN languages. Chinese can be vertical but modern usage is left-to-right."
+    },
+    {
+      "id": "rs_eval_30_nato_borders_russia",
+      "shape": "filter",
+      "question": "Of the 32 NATO member states (as of June 2024), how many share a land border with Russia, counting borders with the Kaliningrad exclave?",
+      "answer": "6",
+      "aliases": [
+        "6",
+        "six"
+      ],
+      "notes": "Norway, Finland (joined 2023), Estonia, Latvia border mainland Russia; Lithuania and Poland border the Kaliningrad exclave. Total: 6 NATO members."
+    },
+    {
+      "id": "rs_eval_31_oscar_best_picture_2010s_orig_screenplay",
+      "shape": "filter",
+      "question": "Of the 10 Best Picture winners at the Academy Awards covering films released 2010 through 2019 (83rd through 92nd ceremonies), how many won the Academy Award for Best Original Screenplay at the same ceremony?",
+      "answer": "5",
+      "aliases": [
+        "5",
+        "five"
+      ],
+      "notes": "Best Picture winners 2010-19: The King's Speech (also Original Screenplay), The Artist, Argo (Adapted Screenplay), 12 Years a Slave (Adapted), Birdman (Original Screenplay), Spotlight (Original Screenplay), Moonlight (Adapted Screenplay), The Shape of Water (no screenplay win), Green Book (Original Screenplay), Parasite (Original Screenplay). Films winning Best Picture AND Original Screenplay: The King's Speech, Birdman, Spotlight, Green Book, Parasite = 5. (Replaced ambiguous 'based on a novel/memoir' phrasing with a precise crosstab.)"
+    },
+    {
+      "id": "rs_eval_32_olympic_summer_2000s_asia",
+      "shape": "filter",
+      "question": "Of the 7 Summer Olympic Games held from 2000 through 2024 inclusive (Sydney 2000, Athens 2004, Beijing 2008, London 2012, Rio 2016, Tokyo 2020, Paris 2024), how many took place in Asia?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "Beijing 2008 and Tokyo 2020 (held 2021) are in Asia. Sydney is Oceania, Athens/London/Paris are Europe, Rio is South America."
+    },
+    {
+      "id": "rs_eval_33_g7_2024_woman_head_state",
+      "shape": "filter",
+      "question": "Of the 7 G7 member countries, how many had a woman as their head of government as of June 2024?",
+      "answer": "1",
+      "aliases": [
+        "1",
+        "one"
+      ],
+      "notes": "Italy: Giorgia Meloni (PM since October 2022). The other six (Canada/Trudeau, France/Attal, Germany/Scholz, Japan/Kishida, UK/Sunak, USA/Biden — POTUS is head of state AND government) all had male heads of government in June 2024."
+    },
+    {
+      "id": "rs_eval_34_currencies_top10_pop_non_decimal",
+      "shape": "filter",
+      "question": "Of the 10 most populous countries (per 2024 UN estimates), how many have an official currency that is NOT subdivided into 100 minor units?",
+      "answer": "0",
+      "aliases": [
+        "0",
+        "zero",
+        "none"
+      ],
+      "notes": "Top 10: India (rupee/100 paise), China (yuan/100 fen), USA (dollar/100 cents), Indonesia (rupiah/100 sen), Pakistan (rupee/100 paisa), Nigeria (naira/100 kobo), Brazil (real/100 centavos), Bangladesh (taka/100 poisha), Russia (rouble/100 kopecks), Mexico (peso/100 centavos). All decimal-subdivided. Trick question."
+    },
+    {
+      "id": "rs_eval_35_dwarf_planets_outside_kuiper",
+      "shape": "filter",
+      "question": "Of the 5 IAU-recognized dwarf planets, how many orbit primarily inside the Kuiper Belt or beyond?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Pluto, Haumea, Makemake (Kuiper Belt). Eris (scattered disc, beyond Kuiper). Ceres is in the asteroid belt between Mars and Jupiter — NOT in the Kuiper region."
+    },
+    {
+      "id": "rs_eval_36_uefa_finals_decade_english_winners",
+      "shape": "filter",
+      "question": "Of the 10 UEFA Champions League finals played in the 2014-15 through 2023-24 seasons inclusive, how many were won by an English club?",
+      "answer": "3",
+      "aliases": [
+        "3",
+        "three"
+      ],
+      "notes": "Winners by season: 2014-15 Barcelona, 2015-16 Real Madrid, 2016-17 Real Madrid, 2017-18 Real Madrid, 2018-19 Liverpool (English), 2019-20 Bayern Munich, 2020-21 Chelsea (English), 2021-22 Real Madrid, 2022-23 Manchester City (English), 2023-24 Real Madrid. English winners: 3."
+    },
+    {
+      "id": "rs_eval_37_top10_economies_landlocked",
+      "shape": "filter",
+      "question": "Of the 10 largest economies by nominal GDP (per IMF 2024 estimates: USA, China, Germany, Japan, India, UK, France, Italy, Brazil, Canada), how many are landlocked?",
+      "answer": "0",
+      "aliases": [
+        "0",
+        "zero",
+        "none"
+      ],
+      "notes": "All 10 have ocean coastlines. Trick: agent may answer 1+ if it confuses 'landlocked region' with 'landlocked country'."
+    },
+    {
+      "id": "rs_eval_38_un_official_languages_non_european",
+      "shape": "filter",
+      "question": "Of the 6 official languages of the United Nations, how many are not classified as Indo-European languages?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "Arabic (Afro-Asiatic) and Chinese (Sino-Tibetan) are non-Indo-European. English, French, Russian, Spanish are all Indo-European."
+    },
+    {
+      "id": "rs_eval_39_brics_official_english",
+      "shape": "filter",
+      "question": "Of the 5 original BRICS countries (Brazil, Russia, India, China, South Africa), how many have English as an official or constitutional language?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "India (English is associate official under the 1963 Official Languages Act) and South Africa (English is one of 12 official languages). Brazil's official language is Portuguese, Russia's is Russian, China's is Standard Chinese."
+    },
+    {
+      "id": "rs_eval_40_g20_summit_hosts_2020s",
+      "shape": "granular",
+      "question": "Of the 5 G20 summits held from 2020 through 2024 inclusive (Riyadh 2020, Rome 2021, Bali 2022, New Delhi 2023, Rio 2024), how many took place in countries that were NOT G20 founding members in 1999?",
+      "answer": "0",
+      "aliases": [
+        "0",
+        "zero",
+        "none"
+      ],
+      "notes": "Saudi Arabia, Italy, Indonesia, India, Brazil — all G20 founding members."
+    },
+    {
+      "id": "rs_eval_41_nobel_lit_2020_2024_european",
+      "shape": "granular",
+      "question": "Of the 5 Nobel Prize in Literature laureates from 2020 through 2024 inclusive, how many were born in Europe?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "2020 Louise Glück (USA-born), 2021 Abdulrazak Gurnah (Zanzibar, Africa), 2022 Annie Ernaux (France), 2023 Jon Fosse (Norway), 2024 Han Kang (South Korea). Europe-born: Ernaux, Fosse = 2."
+    },
+    {
+      "id": "rs_eval_42_recent_world_cup_winners_european",
+      "shape": "granular",
+      "question": "Of the 5 most recent FIFA Men's World Cup winners (covering the 2006, 2010, 2014, 2018, and 2022 tournaments), how many were European national teams?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "2006 Italy, 2010 Spain, 2014 Germany, 2018 France, 2022 Argentina. European winners: Italy, Spain, Germany, France = 4. Argentina is South American."
+    },
+    {
+      "id": "rs_eval_43_recent_oscar_directors_non_us",
+      "shape": "granular",
+      "question": "Of the 5 winners of the Academy Award for Best Director for films of 2019 through 2023 (92nd through 96th ceremonies), how many were NOT born in the United States?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Bong Joon-ho (South Korea, 92nd), Chloé Zhao (China, 93rd), Jane Campion (New Zealand, 94th), Daniel Kwan & Daniel Scheinert (USA-born, 95th), Christopher Nolan (UK, 96th). Non-US-born: Bong, Zhao, Campion, Nolan = 4."
+    },
+    {
+      "id": "rs_eval_44_recent_super_bowl_afc_champ",
+      "shape": "granular",
+      "question": "Of the 5 most recent Super Bowls (LV through LIX, played February 2021 through February 2025), how many were won by the AFC champion?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "LV: Tampa Bay (NFC), LVI: Rams (NFC), LVII: Kansas City (AFC), LVIII: Kansas City (AFC), LIX: Philadelphia (NFC). AFC wins: 2 (LVII, LVIII)."
+    },
+    {
+      "id": "rs_eval_45_recent_grand_slam_men_outside_big3",
+      "shape": "granular",
+      "question": "Of the 12 men's tennis Grand Slam tournaments played from 2022 through 2024 inclusive, how many were won by a player other than Novak Djokovic, Rafael Nadal, or Roger Federer?",
+      "answer": "6",
+      "aliases": [
+        "6",
+        "six"
+      ],
+      "notes": "2022: AO Nadal, FO Nadal, W Djokovic, USO Alcaraz; 2023: AO Djokovic, FO Djokovic, W Alcaraz, USO Djokovic; 2024: AO Sinner, FO Alcaraz, W Alcaraz, USO Sinner. Non-Big-3: Alcaraz (USO 22, W 23, FO+W 24 = 4) + Sinner (AO+USO 24 = 2) = 6."
+    },
+    {
+      "id": "rs_eval_46_recent_eurovision_non_european_geog",
+      "shape": "granular",
+      "question": "Of the 5 most recent Eurovision Song Contest winners (2019, 2021, 2022, 2023, 2024 — 2020 was cancelled), how many won representing a country that does not lie wholly within the European continent?",
+      "answer": "0",
+      "aliases": [
+        "0",
+        "zero",
+        "none"
+      ],
+      "notes": "2019 Netherlands, 2021 Italy, 2022 Ukraine, 2023 Sweden, 2024 Switzerland. All five are wholly European. Trick: agent may guess >0 thinking of Israel or Australia (frequent participants but not winners in this window)."
+    },
+    {
+      "id": "rs_eval_47_recent_booker_winners_first_book",
+      "shape": "granular",
+      "question": "Of the 5 most recent Booker Prize for Fiction winners (2020 through 2024), how many won for their debut novel?",
+      "answer": "1",
+      "aliases": [
+        "1",
+        "one"
+      ],
+      "notes": "2020 Douglas Stuart (Shuggie Bain, debut), 2021 Damon Galgut (The Promise, not debut), 2022 Shehan Karunatilaka (The Seven Moons of Maali Almeida, not debut), 2023 Paul Lynch (Prophet Song, not debut), 2024 Samantha Harvey (Orbital, not debut). Debut wins: just Stuart = 1."
+    },
+    {
+      "id": "rs_eval_48_recent_un_sg_european",
+      "shape": "granular",
+      "question": "Of the 9 Secretaries-General of the United Nations (Trygve Lie through António Guterres), how many were born in Europe?",
+      "answer": "4",
+      "aliases": [
+        "4",
+        "four"
+      ],
+      "notes": "Trygve Lie (Norway, 1946-52), Dag Hammarskjöld (Sweden, 1953-61), U Thant (Burma, 1961-71), Kurt Waldheim (Austria, 1972-81), Javier Pérez de Cuéllar (Peru, 1982-91), Boutros Boutros-Ghali (Egypt, 1992-96), Kofi Annan (Ghana, 1997-2006), Ban Ki-moon (South Korea, 2007-16), António Guterres (Portugal, 2017-). European-born: Lie, Hammarskjöld, Waldheim, Guterres = 4."
+    },
+    {
+      "id": "rs_eval_49_recent_palme_dor_women_directors",
+      "shape": "granular",
+      "question": "Of the 9 Palme d'Or winners at the Cannes Film Festival in years 2015 through 2024 (no festival in 2020), how many were directed by a woman?",
+      "answer": "2",
+      "aliases": [
+        "2",
+        "two"
+      ],
+      "notes": "2015 Dheepan (Audiard), 2016 I Daniel Blake (Loach), 2017 The Square (Östlund), 2018 Shoplifters (Kore-eda), 2019 Parasite (Bong), 2021 Titane (Ducournau, woman), 2022 Triangle of Sadness (Östlund), 2023 Anatomy of a Fall (Triet, woman), 2024 Anora (Baker). Women-directed: Ducournau and Triet = 2."
+    },
+    {
+      "id": "rs_eval_50_recent_imf_md_european",
+      "shape": "granular",
+      "question": "Of the 5 most recent Managing Directors of the International Monetary Fund (Horst Köhler 2000-04, Rodrigo Rato 2004-07, Dominique Strauss-Kahn 2007-11, Christine Lagarde 2011-19, Kristalina Georgieva 2019-), how many were born in Europe?",
+      "answer": "5",
+      "aliases": [
+        "5",
+        "five",
+        "all"
+      ],
+      "notes": "Köhler (Poland, then a German territory), Rato (Spain), Strauss-Kahn (France), Lagarde (France), Georgieva (Bulgaria). All five European-born. Reflects the European-MD convention at the IMF."
+    }
+  ]
+}

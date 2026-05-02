@@ -39,7 +39,7 @@ load_dotenv(ROOT / ".env")
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--domain", choices=["qa", "research"], required=True)
-    p.add_argument("--split", choices=["probe", "eval", "dry_run"], default="eval")
+    p.add_argument("--split", choices=["probe", "eval", "eval_v2", "dry_run"], default="eval")
     p.add_argument("--model", default=os.environ.get("STEM_DEFAULT_MODEL", "gpt-4o-mini"))
     p.add_argument(
         "--judge-model",
@@ -167,8 +167,13 @@ def main() -> int:
     timestamped = log_dir / f"{prefix}.json"
     with timestamped.open("w", encoding="utf-8") as f:
         json.dump(out, f, indent=2, default=str)
-    if args.split == "eval" and not args.config_path:
-        canonical = log_dir / f"baseline_{args.domain}.json"
+    if args.split in ("eval", "eval_v2") and not args.config_path:
+        canonical_name = (
+            f"baseline_{args.domain}.json"
+            if args.split == "eval"
+            else f"baseline_{args.domain}_v2.json"
+        )
+        canonical = log_dir / canonical_name
         with canonical.open("w", encoding="utf-8") as f:
             json.dump(out, f, indent=2, default=str)
         print(f"\nResults written to:\n  {timestamped}\n  {canonical}  (canonical)")
