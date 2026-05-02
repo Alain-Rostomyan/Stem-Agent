@@ -445,3 +445,113 @@ I'd lean (a). The smoke run already gave the writeup a clean
 research-domain result; spending ~$1 to maybe-incrementally improve a
 single domain is less load-bearing than getting QA on the board.
 
+
+---
+
+## Phase 3 — QA domain (complete on 2026-05-02 12:55)
+
+### Pre-run bug: cross-domain trace-shape mismatch
+
+First QA stem launch crashed in `investigate()`. Root cause:
+`summarize_trace` in `stem/investigate.py` was hardcoded to the
+research per-task record shape (`task_id, question, canonical,
+candidate, correct, ...`). The QA per-task record is a different
+shape (`task_id, score, reason, buggy, fixed, agent_final, ...`)
+emitted by `evals/qa/runner.py`. Specifically, `splitlines()[0]` on
+the missing `question` field threw IndexError immediately.
+
+Two writeup-worthy points:
+
+1. **The framework had a silent cross-domain assumption.** Built the
+   stem against the research domain first; the trace-shape contract
+   was implicit, not documented, and only surfaced when the second
+   domain was attempted. Concrete example of "phase 2's smoke tests
+   ran on research data, so research-shape was overfit-to."
+
+2. **Fix forced a real data-contract decision.** Branched
+   `summarize_trace` on which fields are present rather than
+   normalizing the two record shapes (which would touch the eval
+   runners — bigger blast radius). Also made `_commit_initial_config`
+   idempotent so partial-failure recovery doesn't need git surgery.
+
+Commit: 569ab37.
+
+### 2026-05-02 12:50–12:55: stem run + eval
+
+**Stem run.** 4 iterations, plateau-stopped, 4/4 accepted (no
+rejections). Cost $0.109. Path:
+- step 1: modify_prompt → 0.200 (only probe_01 add_one passed)
+- step 2: enable_tool (write_file) → 0.800 ← biggest jump
+- step 3: enable_tool (run_shell_command) → 0.800
+- step 4: add_few_shot → 0.800
+- stop: plateau
+
+The QA stem chose `modify_prompt` first instead of `enable_tool` —
+opposite of research's first move. Reason: the QA initial config
+already had `run_python` and `call_llm`, which is enough to write a
+test file via `open(path, 'w').write(...)` even without `write_file`.
+So tools weren't the immediate bottleneck. Once the prompt was
+specialized, then enabling `write_file` gave the natural 1→4 jump on
+probes 02/03/04/05.
+
+**Final config (`configs/qa.json` at master HEAD):**
+- 6 enabled tools (added `write_file`, `run_shell_command`).
+- 1 few-shot.
+- Specialized prompt with one specific insight worth highlighting in
+  the writeup: *"Never derive expected outputs by calling the buggy
+  implementation."* The stem recognized the failure mode where an
+  agent runs the buggy code, observes its output, and writes a test
+  matching that output (which would silently certify the bug). That
+  is a non-obvious specialization the generic baseline prompt has no
+  reason to surface.
+- Still 0 custom tools (same gap as research — neither domain ever
+  triggered `write_tool`).
+
+**Eval (15 held-out tasks).** 12/15 = 0.800 vs locked baseline 0.667
+(10/15) — **+13.3pt**. Probe and eval matched exactly (0.800 / 0.800).
+Cost $0.015.
+
+**Smaller lift than research (+13 vs +33) is expected:** baseline was
+already 66.7% on QA — only 33pt of headroom. We closed 4 of those 33,
+about 12%. Research baseline was 26.7% — much more headroom (73pt),
+and we closed 33 of 73 = 45%. The two lifts are not directly
+comparable; per-domain headroom matters.
+
+**Failure pattern in the 3 QA misses — coherent and writeup-worthy:**
+all three are string-processing tasks that hinge on a normalization
+edge case.
+
+- `qa_eval_05_unique_preserve_order`: agent's tests passed on the
+  buggy implementation. The bug almost certainly relates to
+  preserving order under hash-set deduplication, which the test
+  didn't probe.
+- `qa_eval_07_caesar_shift`: tests fail on the FIXED code → the
+  agent's tests encode the wrong spec. Likely a wrap-around or
+  lower/upper case interaction misread.
+- `qa_eval_10_count_words`: tests fail on FIXED → spec misread, most
+  likely whitespace/unicode word-boundary handling.
+
+This dovetails with `qa_probe_03_count_vowels` failing every
+iteration during training (the bug there is case-sensitivity in the
+vowel set). **The QA agent learned the SHAPE of writing tests but not
+the discipline of testing edge cases — particularly string
+normalization (case, whitespace, Unicode boundaries).** Future-
+iteration target: a few-shot example that explicitly enumerates edge
+categories before writing tests, or a custom helper tool that
+generates "tricky inputs" for a given function signature.
+
+**Total project spend after QA: ~$0.55.** Still well under 1% of the
+budget.
+
+### Next: QA-only B-style ablation
+
+Briefing step 24: re-run the QA stem with starter tools restricted
+to `run_python` and `call_llm` only (no `read_file`, no `write_file`,
+no `web_search`, etc.). The whole point is to force the stem into a
+position where it MUST author custom tools to make any progress.
+This is currently the most plausible path to closing the
+"zero custom tools authored" gap that's blocking step 26 of the
+writeup plan.
+
+`stem/run_stem.py` doesn't currently take a starter-tool-subset
+flag — just loads all 7 by default. Adding one is ~10 lines.
