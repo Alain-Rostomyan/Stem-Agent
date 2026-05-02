@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from agent.baseline import baseline_config  # noqa: E402
+from agent.config import load_config  # noqa: E402
 from evals.qa.runner import run_qa_eval  # noqa: E402
 from evals.research.runner import run_research_eval  # noqa: E402
 from stem.dotenv import load_dotenv  # noqa: E402
@@ -63,6 +64,16 @@ def main() -> int:
         default=12,
     )
     p.add_argument(
+        "--config-path",
+        default=None,
+        help=(
+            "Path to a config JSON to evaluate instead of the generic baseline. "
+            "When set, the script does NOT overwrite the canonical baseline file; "
+            "output filenames are prefixed with the config stem (e.g. "
+            "'eval_research_<ts>.json')."
+        ),
+    )
+    p.add_argument(
         "--dry-run",
         action="store_true",
         help="Skip OPENAI_API_KEY check and exit without making any calls.",
@@ -70,7 +81,8 @@ def main() -> int:
     args = p.parse_args()
 
     if args.dry_run:
-        print("[dry-run] would run baseline on", args.domain, args.split, "with model", args.model)
+        what = f"config-path={args.config_path}" if args.config_path else "baseline"
+        print("[dry-run] would run", what, "on", args.domain, args.split, "with model", args.model)
         return 0
 
     if not os.environ.get("OPENAI_API_KEY"):
@@ -84,7 +96,12 @@ def main() -> int:
     ts = time.strftime("%Y%m%dT%H%M%S")
     log_dir = ROOT / "runs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    agent_log = log_dir / f"baseline_{args.domain}_{args.split}_{ts}_agent.jsonl"
+    if args.config_path:
+        cfg_stem = Path(args.config_path).stem
+        prefix = f"eval_{cfg_stem}_{args.split}_{ts}"
+    else:
+        prefix = f"baseline_{args.domain}_{args.split}_{ts}"
+    agent_log = log_dir / f"{prefix}_agent.jsonl"
 
     llm = LLMClient(
         max_calls=args.max_calls,
@@ -92,7 +109,10 @@ def main() -> int:
         default_model=args.model,
     )
 
-    cfg = baseline_config()
+    if args.config_path:
+        cfg = load_config(args.config_path)
+    else:
+        cfg = baseline_config()
 
     if args.domain == "qa":
         task_set = ROOT / "evals" / "qa" / f"{args.split}_set.json"
@@ -107,15 +127,15 @@ def main() -> int:
     else:
         # Research uses a separate judge client so the judge's calls don't eat
         # into the agent's budget.
-        judge_log = log_dir / f"baseline_{args.domain}_{args.split}_{ts}_judge.jsonl"
+        judge_log = log_dir / f"{prefix}_judge.jsonl"
         judge = LLMClient(
             max_calls=args.judge_max_calls,
             log_path=judge_log,
             default_model=args.judge_model,
         )
-        task_set = ROOT / "evals" / "research" / f"{args.split}_set.json"
+        task_set_path = ROOT / "evals" / "research" / f"{args.split}_set.json"
         result = run_research_eval(
-            cfg, llm, task_set,
+            cfg, llm, task_set_path,
             judge_llm=judge,
             judge_model=args.judge_model,
             max_steps_per_task=args.max_steps_per_task,
@@ -126,13 +146,28 @@ def main() -> int:
             f"\nResearch {args.split}: accuracy={result.accuracy:.3f} ({result.n_correct}/{result.n_tasks}); "
             f"avg_citations={result.avg_citations:.2f}; citation_validity={result.citation_validity:.2f}"
         )
+        # Per-shape breakdown — join per_task back to the eval set's shape field.
+        with task_set_path.open("r", encoding="utf-8") as f:
+            shape_by_id = {t["id"]: t.get("shape", "unknown") for t in json.load(f)["tasks"]}
+        per_shape: dict[str, list[bool]] = {}
+        for r in result.per_task:
+            shape = shape_by_id.get(r["task_id"], "unknown")
+            per_shape.setdefault(shape, []).append(bool(r.get("correct")))
+        if per_shape:
+            print("Per-shape accuracy:")
+            for shape in sorted(per_shape):
+                bools = per_shape[shape]
+                n_pass = sum(bools)
+                n = len(bools)
+                acc = n_pass / n if n else 0.0
+                print(f"  {shape}: {n_pass}/{n} ({acc:.3f})")
         print(f"Agent LLM: {result.llm_stats}")
         print(f"Judge LLM: {result.judge_stats}")
 
-    timestamped = log_dir / f"baseline_{args.domain}_{args.split}_{ts}.json"
+    timestamped = log_dir / f"{prefix}.json"
     with timestamped.open("w", encoding="utf-8") as f:
         json.dump(out, f, indent=2, default=str)
-    if args.split == "eval":
+    if args.split == "eval" and not args.config_path:
         canonical = log_dir / f"baseline_{args.domain}.json"
         with canonical.open("w", encoding="utf-8") as f:
             json.dump(out, f, indent=2, default=str)
