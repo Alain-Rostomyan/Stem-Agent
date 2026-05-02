@@ -4,7 +4,8 @@
     "read_file",
     "list_directory",
     "run_python",
-    "call_llm"
+    "call_llm",
+    "web_search"
   ],
   "custom_tools": [],
   "few_shot_examples": [],
