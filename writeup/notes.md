@@ -355,3 +355,93 @@ generalization win. That's the next concrete action.
 Option 1 is the discipline move (verify probe→eval generalization before
 spending more on evolution). Option 2 is the explore move. Both are
 cheap; can do option 1 first and option 2 if option 1 looks solid.
+
+---
+
+### 2026-05-02 12:22: Evolved config on the held-out eval set — clean win
+
+Ran the evolved config (`configs/research.json` at master HEAD, post-stem)
+on the 15-question research eval set via a small extension to
+`scripts/run_baseline.py` (added `--config-path` flag, commit 0868a8b).
+
+**Headline: 0.600 (9/15) on the held-out eval set** vs the locked
+baseline's 0.267 (4/15). Identical to the probe-set score, so the stem
+didn't overfit to the 5 probes — the specialization generalized.
+
+Per-shape, this is the cleanest story we could ask for:
+
+| Shape    | Baseline | Evolved | Δ          |
+|----------|----------|---------|------------|
+| agg      | 4/5      | 4/5     | 0          |
+| filter   | 0/5      | 3/5     | **+3**     |
+| granular | 0/5      | 2/5     | **+2**     |
+| total    | 4/15     | 9/15    | **+5**     |
+
+The lift comes entirely from `filter` and `granular` — the structurally
+hard shapes (filter axis ≠ list axis; granular requires per-entity
+lookups). Baseline scored 0/5 on each. Evolved hits 3/5 and 2/5
+respectively. `agg` was already the shape the baseline could mostly
+handle; both configs share the same one wrong (rs_eval_01_nato_joined_
+post_2000 — the NATO post-2000 timing question).
+
+This is the shape of result the writeup wanted: not "specialized agent
+got 0.05 better than generic" but "specialized agent unlocked shapes the
+generic agent couldn't touch." It says the system prompt's micro-plan +
+tabular scratchpad + stop-rule was actually doing structural work, not
+just nudging the generic agent's existing behavior.
+
+**Wrong-answer breakdown for the 6 misses** (looking at the per-task
+log):
+
+- rs_eval_01_nato_joined_post_2000 (agg) — also wrong on baseline.
+- rs_eval_07_womens_wc_men_too (granular) — wrong, with a citation.
+- rs_eval_09_nato_founding_monarchies (granular) — wrong, with a
+  citation. NOTE: same task that the baseline trace got 3 instead of 7
+  on (Belgium/UK/Norway only, missed 4). Worth checking whether the
+  evolved config makes the same 3-not-7 mistake, since the system
+  prompt's "cross-check on subtle attributes" rule was supposed to
+  catch this.
+- rs_eval_11_cl_winners_england (filter) — wrong, **0 URLs cited**.
+  Most-recent-N format the few-shots don't cover.
+- rs_eval_12_booker_outside_uk (filter) — wrong, **0 URLs cited**. Same
+  most-recent-N pattern as above.
+- rs_eval_14_palme_dor_women (granular) — wrong, with a citation.
+
+**Two writeup-worthy observations from the misses:**
+
+1. Two failures had ZERO citations (rs_eval_11, rs_eval_12). Both are
+   "most recent N" sports/literature questions. The system prompt
+   explicitly has a "HANDLING 'MOST RECENT N' OR TIME-RANGE QUESTIONS"
+   section and the agent still fell off the citation requirement on
+   exactly that shape. That's a specific gap the evolved prompt didn't
+   close. Could be an opportunity for a future stem iteration.
+
+2. **Citation validity 1.00.** Every URL the evolved agent cited
+   resolved with HEAD < 400. Combined with avg_citations 0.87, the
+   evolved config's grounding is clean when it grounds at all.
+
+**Cost: $0.047 agent + $0.001 judge = $0.048.** Total project spend
+now ~$0.35 of €50–70 budget.
+
+**Important caveat for the writeup.** The evolved config has 5 enabled
+tools; the baseline config has all 7 (`run_shell_command` and
+`write_file` aren't enabled by the evolved config because the stem
+started from a 4-tool subset and only ever enabled `web_search`). So
+the evolved config beat the baseline by 33pt **with fewer tools**, just
+prompt + few-shots + the one tool the stem chose to enable. That's a
+stronger statement than "more tools + specialized prompt won."
+
+**Phase 3 research domain decision.** Probe→eval generalization
+confirmed at +33pt with the right shape distribution. Two reasonable
+next moves:
+
+- (a) Move on to QA: same loop, then the QA-only B-style ablation.
+- (b) Run a second, longer research evolution (defaults: 20 iter / 50
+  calls) to see whether the stem ever reaches for fetch_url, the
+  planner_executor architecture, or specialized handling of the
+  "most recent N" failure pattern.
+
+I'd lean (a). The smoke run already gave the writeup a clean
+research-domain result; spending ~$1 to maybe-incrementally improve a
+single domain is less load-bearing than getting QA on the board.
+
